@@ -42,7 +42,7 @@ class KobukiControlClass():
         self.twist_cmd.angular.z = 0
 
 
-class MimiMotorControlClass():
+class MimiControlClass():
     def __init__(self):
         #Publisher
         self.m5_pub = rospy.Publisher('/m5_controller/command', Float64, queue_size = 1)
@@ -79,7 +79,7 @@ class NavigationClass():
         self.navigation_res_sub = rospy.Subscriber('/navigation/result', Bool, self.setPlace, self.movePlace)
         
         self.navigation_result_flg = False
-        self.mimi = MimiMotorControlClass()
+        self.mimi = MimiControlClass()
         
     def getNavigationResultCB(self, result_msg):
         self.navigation_result_flg = result_msg.data
@@ -139,11 +139,11 @@ class ObjectRecognizeClass():
         self.object_recog_flg = result_msg.data
 
 
-class MoveObject( ObjectRecognizeClass, NavigationClass, MimiMotorControlClass, KobukiControlClass ):#-------------state0
+class MoveObject( ObjectRecognizeClass, NavigationClass, MimiControlClass, KobukiControlClass ):#-------------state0
     def __init__(self):
         self.object_req = ObjectRecognizeClass()
         self.nav = NavigationClass()
-        self.mimi = MimiMotorControlClass()
+        self.mimi = MimiControlClass()
         self.kobuki = KobukiControlClass()
 
     #def frontObject(self, receive_msg):
@@ -183,7 +183,7 @@ class PickObject():#----------------------------------------------------state1
         self.object_grasp_result_flg = False    
         self.object_name = String()
         self.object_req = ObjectRecognizeClass()
-        self.mimi = MimiMotorControlClass()
+        self.mimi = MimiControlClass()
     
     def getObjectGraspResultCB(self, result_msg):
         self.object_grasp_result_flg = result_msg.data

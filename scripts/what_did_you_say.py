@@ -15,6 +15,33 @@ from geometry_msgs.msg import Pose, PoseWithCovarianceStamped, Point, Quaternion
 from std_msgs.msg import String, Bool, Int8, Float64
 
 
+class KobukiControlClass():
+    def __init__(self):
+        #Publisher
+        self.cmd_vel_pub = rospy.Publisher('/cmd_vel_mux/input/teleop', Twist, queue_size = 1)#kobukiの前進後進
+        #Subscriber
+        self.laser_sub = rospy.Subscriber('/scan', LaserScan, self.getLaserCB)
+        
+        self.min_laser_dist = 999.9
+        self.front_laser_dist = 999.9
+        self.twist_cmd = Twist()
+        
+    def getLaserCB(self, laser_scan):
+        self.laser_dist = laser_scan.ranges
+        self.min_laser_dist = min(laser_scan.ranges[180:540])
+        self.front_laser_dist = laser_scan.ranges[359]
+        
+    def linearControl(self, linear_num):
+        self.twist_cmd.linear.x = linear_num
+        self.cmd_vel_pub.publish(self.twist_cmd)
+        self.twist_cmd.linear.x = 0
+
+    def angularControl(self, angular_num):
+        self.twist_cmd.angular.z = angular_num
+        self.cmd_vel_pub.publish(self.twist_cmd)
+        self.twist_cmd.angular.z = 0
+
+
 class MimiControlClass():
     def __init__(self):
         #Publisher
@@ -42,7 +69,7 @@ class MimiControlClass():
         self.changing_pose_pub.publish(pose_req)
         rospy.sleep(1.0)
 
-
+    
 class NavigationClass():
     def __init__(self):
         #Publisher
@@ -51,8 +78,9 @@ class NavigationClass():
         #Subscriber
         self.navigation_res_sub = rospy.Subscriber('/navigation/result', Bool, self.setPlace, self.movePlace)
         
+        self.navigation_result_flg = False
         self.mimi = MimiControlClass()
-
+        
     def getNavigationResultCB(self, result_msg):
         self.navigation_result_flg = result_msg.data
 
@@ -79,47 +107,65 @@ class NavigationClass():
             rospy.sleep(3.0)
         self.navigation_result_flg = False
         rospy.loginfo(" Has arrived!")
-    
-class AvoidThat():
+ 
+class WhatDidYouSay():
     def __init__(self):
         self.nav = NavigationClass()
         self.mimi = MimiControlClass()
 
-    def moveStartPosition(self):#--------------------------------state0
+    def enterRoom(self):
         try:
             print '-' *80
             rospy.loginfo(" Start the state0")
-            self.mimi.motorControl(6, 0.2)
-            self.mimi.speak("I will go to the start position")
-            self.nav.setPlace('start_position')
-            rospy.sleep(3.0)
+            self.nav.movePlace('')#開始場所を指定
         except rospy.ROSInterruptException:
             rospy.loginfo(" Interrupted")
             pass
-    
-    def moveDestination(self):#----------------------------------state1
+
+    def moveClosePeople(self):
         try:
             print '-' *80
             rospy.loginfo(" Start the state1")
-            self.mimi.speak("I will go to the destination")
-            self.loginfo(" Move to destination")
-            self.nav.movePlace('destination')
-            rospy.sleep(3.0)
+            self.mimi.motorControl(6, 0.2)#顔の角度を指定
+            #人を発見する処理は保留
+            self.mimi.speak("Hello. I'm mimi")
+        except rospy.ROSInterruptException:
+            rospy.loginfo(" Interrupted")
+            pass
+
+    def startConversation(self):
+        try:
+            print '-' *80
+            rospy.loginfo(" Start the state2")
+            self.mimi.speak("Let's start conversation")
+        except rospy.ROSInterruptException:
+            rospy.loginfo(" Interrupted")
+            pass
+
+    def exitRoom(self):
+        try:
+            print '-' *80
+            rospy.loginfo(" Start the state3")
+            self.nav.movePlace('door')
         except rospy.ROSInterruptException:
             rospy.loginfo(" Interrupted")
             pass
 
 
 if __name__ == '__main__':
-    rospy.init_node("avoid_taht", anonymous = True)
+    rospy.init_node("what_did_you_say", anonymous = True)
     try:
         state = 0
-        at = AvoidThat()
-        while not rospy.is_shutdown() and not state == 3:
+        wds = WhatDidYouSay()
+        while not rospy.is_shutdown() and not state == 4:
             if state == 0:
-                state = at.moveStartPosition()
+                state = wds.enterRoom()
             elif state == 1:
-                state = at.moveDestination()
+                state = wds.moveClosePeople()
+            elif state == 2:
+                state = wds.startConversation()
+            elif state == 3:
+                state = wds.exitRoom()
     except rospy.ROSInterruptException:
         rospy.loginfo(" Interrupted")
         pass
