@@ -110,8 +110,35 @@ class NavigationClass():
  
 class WhatDidYouSay():
     def __init__(self):
+        #Publisher
+        self.conversation_start_pub = rospy.Publisher('conversation/start', Bool, queue_size = 1)
+        #Subscriber
+        self.conversation_stop_sub = rospy.Subscriber('conversation/stop', Bool, self.conversation_stopCB)
+        
         self.nav = NavigationClass()
         self.mimi = MimiControlClass()
+        self.conversation_stop_flg = False
+
+    def conversation_stopCB(self, receive_msg):
+        self.conversation_stop_flg = receive_msg
+
+    def conversationMethod(self):
+        try:
+            question_number = 0
+            result = Bool()
+            result.data = True
+            while not rospy.is_shutdown() and not question_number == 3:
+                rospy.loginfo(" Quaternion Number: " + question_number + 1)
+                self.conversation_start_pub.publish(result)
+                rospy.loginfo(" Published 'conversation/start' Topic")
+                while self.conversation_stop_flg == False:
+                    rospy.loginfo(" Waiting for topic...")
+                rospy.loginfo(" Published 'conversation/stop' Topic")
+                question_number += 1
+            rospy.loginfo(" Finish conversation")
+        except rospy.ROSInterruptException:
+            rospy.loginfo(" Interrupted")
+            pass
 
     def enterRoom(self):
         try:
@@ -138,6 +165,7 @@ class WhatDidYouSay():
             print '-' *80
             rospy.loginfo(" Start the state2")
             self.mimi.speak("Let's start conversation")
+            self.conversationMethod()
         except rospy.ROSInterruptException:
             rospy.loginfo(" Interrupted")
             pass
