@@ -102,9 +102,9 @@ class AvoidThat():
         try:
             print '-' *80
             rospy.loginfo(" Start the state1")
-            self.mimi.speak("I will go to the destination")
-            self.loginfo(" Move to destination")
-            self.nav.movePlace('destination')
+            self.mimi.speak("I will go to the goal_position")
+            self.loginfo(" Move to goal_position")
+            self.nav.movePlace('goal_position')
             rospy.sleep(3.0)
         except rospy.ROSInterruptException:
             rospy.loginfo(" Interrupted")

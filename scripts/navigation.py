@@ -23,7 +23,7 @@ class Navigation:
         self.navigation_result_pub = rospy.Publisher('/navigation/result', Bool, queue_size = 1)
 
         self.location_name = 'Null'
-        self.location_list = [['start_position', 2.68, 1.56, -0.000335*pi], ['goal', 6.86, -4.8, 0.00333*pi]]
+        self.location_list = [['start_position', 2.68, 1.56, -0.000335*pi], ['goal_position', 6.86, -4.8, 0.00333*pi]]
         self.location_pose_x = 0
         self.location_pose_y = 0
         self.location_pose_w = 0
