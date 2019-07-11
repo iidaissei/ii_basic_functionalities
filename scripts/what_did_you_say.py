@@ -14,7 +14,7 @@ from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Pose, PoseWithCovarianceStamped, Point, Quaternion, Twist
 from std_msgs.msg import String, Bool, Int8, Float64
 
-
+#Hello
 class KobukiControlClass():
     def __init__(self):
         #Publisher
