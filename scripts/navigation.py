@@ -133,14 +133,18 @@ class Navigation:
 
 if __name__ == '__main__':
     rospy.init_node('sg_navigation', anonymous = True)
-    nav = Navigation()
-    state = 0
-    while not rospy.is_shutdown():
-        if state == 0:
-            state = nav.waitTopic()
-        elif state == 1:
-            state = nav.setLocationList()
-        elif state == 2:
-            state = nav.navigateToDestination()
-        elif state == 3:
-            state = nav.clearCostmap()
+    try:
+        nav = Navigation()
+        state = 0
+        while not rospy.is_shutdown():
+            if state == 0:
+                state = nav.waitTopic()
+            elif state == 1:
+                state = nav.setLocationList()
+            elif state == 2:
+                state = nav.navigateToDestination()
+            elif state == 3:
+                state = nav.clearCostmap()
+    except rospy.ROSInterruptException:
+        rospy.loginfo(" Interrupted")
+        pass

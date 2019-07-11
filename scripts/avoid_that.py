@@ -92,8 +92,10 @@ class AvoidThat():
             rospy.loginfo(" Start the state0")
             self.mimi.motorControl(6, 0.2)#正面を向く
             self.mimi.speak("I will go to the start position")
-            self.nav.setPlace('start_position')
+            self.nav.movePlace('start_position')
             rospy.sleep(3.0)
+            rospy.loginfo(" Finished the state0")
+            return 1
         except rospy.ROSInterruptException:
             rospy.loginfo(" Interrupted")
             pass
@@ -106,6 +108,8 @@ class AvoidThat():
             self.loginfo(" Move to goal_position")
             self.nav.movePlace('goal_position')
             rospy.sleep(3.0)
+            rospy.loginfo(" Finished the state1")
+            return 2
         except rospy.ROSInterruptException:
             rospy.loginfo(" Interrupted")
             pass
@@ -116,11 +120,12 @@ if __name__ == '__main__':
     try:
         state = 0
         at = AvoidThat()
-        while not rospy.is_shutdown() and not state == 3:
+        while not rospy.is_shutdown() and not state == 2:
             if state == 0:
                 state = at.moveStartPosition()
             elif state == 1:
                 state = at.moveDestination()
+        rospy.loginfo(" Finished Avoid_That"
     except rospy.ROSInterruptException:
         rospy.loginfo(" Interrupted")
         pass
