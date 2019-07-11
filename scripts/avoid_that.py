@@ -52,6 +52,7 @@ class NavigationClass():
         self.navigation_res_sub = rospy.Subscriber('/navigation/result', Bool, self.setPlace, self.movePlace)
         
         self.mimi = MimiControlClass()
+        self.navigation_result_flg = False
 
     def getNavigationResultCB(self, result_msg):
         self.navigation_result_flg = result_msg.data
@@ -62,11 +63,11 @@ class NavigationClass():
         rospy.loginfo(" Memorizing...")
         self.navigation_memorize_pub.publish(place_name)
         rospy.loginfo(" Publeshed topic")
-        while self.navigation_result_flg.data == False and not rospy.is_shutdown():
+        while self.navigation_result_flg == False and not rospy.is_shutdown():
             self.navigation_memorize_pub.publish(place_name)
             rospy.loginfo(" Waiting for result")
             time.sleep(2.0)
-        self.navigation_result_flg.data = False
+        self.navigation_result_flg = False
         rospy.loginfo(" Memorization complete!")
         self.mimi.speak("I remembered the location og the " + place_name)
 
@@ -75,7 +76,7 @@ class NavigationClass():
         place_name = receive_msg
         self.navigation_command_pub.publish(place_name)
         rospy.loginfo(" Moving...")
-        while self.navigation_result_flg.data == False and not rospy.is_shutdown():
+        while self.navigation_result_flg == False and not rospy.is_shutdown():
             rospy.sleep(3.0)
         self.navigation_result_flg = False
         rospy.loginfo(" Has arrived!")
@@ -89,7 +90,7 @@ class AvoidThat():
         try:
             print '-' *80
             rospy.loginfo(" Start the state0")
-            self.mimi.motorControl(6, 0.2)
+            self.mimi.motorControl(6, 0.2)#正面を向く
             self.mimi.speak("I will go to the start position")
             self.nav.setPlace('start_position')
             rospy.sleep(3.0)

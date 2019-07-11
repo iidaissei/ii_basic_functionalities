@@ -90,11 +90,11 @@ class NavigationClass():
         rospy.loginfo(" Memorizing...")
         self.navigation_memorize_pub.publish(place_name)
         rospy.loginfo(" Publeshed topic")
-        while self.navigation_result_flg.data == False and not rospy.is_shutdown():
+        while self.navigation_result_flg == False and not rospy.is_shutdown():
             self.navigation_memorize_pub.publish(place_name)
             rospy.loginfo(" Waiting for result")
             time.sleep(2.0)
-        self.navigation_result_flg.data = False
+        self.navigation_result_flg = False
         rospy.loginfo(" Memorization complete!")
         self.mimi.speak("I remembered the location og the " + place_name)
 
@@ -103,7 +103,7 @@ class NavigationClass():
         place_name = receive_msg
         self.navigation_command_pub.publish(place_name)
         rospy.loginfo(" Moving...")
-        while self.navigation_result_flg.data == False and not rospy.is_shutdown():
+        while self.navigation_result_flg == False and not rospy.is_shutdown():
             rospy.sleep(3.0)
         self.navigation_result_flg = False
         rospy.loginfo(" Has arrived!")

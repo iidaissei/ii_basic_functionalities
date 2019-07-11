@@ -90,11 +90,11 @@ class NavigationClass():
         rospy.loginfo(" Memorizing...")
         self.navigation_memorize_pub.publish(place_name)
         rospy.loginfo(" Publeshed topic")
-        while self.navigation_result_flg.data == False and not rospy.is_shutdown():
+        while self.navigation_result_flg == False and not rospy.is_shutdown():
             self.navigation_memorize_pub.publish(place_name)
             rospy.loginfo(" Waiting for result")
             time.sleep(2.0)
-        self.navigation_result_flg.data = False
+        self.navigation_result_flg = False
         rospy.loginfo(" Memorization complete!")
         self.mimi.speak("I remembered the location og the " + place_name)
 
@@ -103,11 +103,23 @@ class NavigationClass():
         place_name = receive_msg
         self.navigation_command_pub.publish(place_name)
         rospy.loginfo(" Moving...")
-        while self.navigation_result_flg.data == False and not rospy.is_shutdown():
+        while self.navigation_result_flg == False and not rospy.is_shutdown():
             rospy.sleep(3.0)
         self.navigation_result_flg = False
-        rospy.loginfo(" Has arrived!")
- 
+        rospy.loginfo(" Has arrived!") 
+        
+class FindPerson():
+    def __init__(self):
+        #Subscriber
+        rospy.Subscriber('/recog_obj', String, self.findPerson)
+        
+    def findPerson(self, receive_msg):
+        objects = receive_msg.data
+        object_list = objects.split(' ')
+        for i in range(len(object_list)):
+            if object_list[i] == "person":
+                rospy.sleep(5.0)
+
 class WhatDidYouSay():
     def __init__(self):
         #Publisher
@@ -124,57 +136,65 @@ class WhatDidYouSay():
 
     def conversationMethod(self):
         try:
-            question_number = 0
             result = Bool()
             result.data = True
-            while not rospy.is_shutdown() and not question_number == 3:
-                rospy.loginfo(" Quaternion Number: " + question_number + 1)
+            for question_number in range(4):
+                rospy.loginfo(" Question Number: " + question_number)
                 self.conversation_start_pub.publish(result)
                 rospy.loginfo(" Published 'conversation/start' Topic")
                 while self.conversation_stop_flg == False:
                     rospy.loginfo(" Waiting for topic...")
+                    rospy.sleep(1.5)
                 rospy.loginfo(" Published 'conversation/stop' Topic")
-                question_number += 1
             rospy.loginfo(" Finish conversation")
         except rospy.ROSInterruptException:
             rospy.loginfo(" Interrupted")
             pass
 
-    def enterRoom(self):
+    def enterRoom(self):#--------------------------------------------------------state0
         try:
             print '-' *80
             rospy.loginfo(" Start the state0")
-            self.nav.movePlace('')#開始場所を指定
+            self.nav.setPlace('start_position')#スタート地点を記憶
+            while self.kobuki.front_laser_dist < 0.88:#試走場のドアの幅を参考
+                rospy.loginfo(" Waiting for door open")
+                rospy.sleep(2.0)
+            for i in range(3):
+                self.kobuki.linearControl(1.0)
+            return 1
         except rospy.ROSInterruptException:
             rospy.loginfo(" Interrupted")
             pass
 
-    def moveClosePeople(self):
+    def moveClosePeople(self):#--------------------------------------------------state1
         try:
             print '-' *80
             rospy.loginfo(" Start the state1")
             self.mimi.motorControl(6, 0.2)#顔の角度を指定
             #人を発見する処理は保留
             self.mimi.speak("Hello. I'm mimi")
+            return 2
         except rospy.ROSInterruptException:
             rospy.loginfo(" Interrupted")
             pass
 
-    def startConversation(self):
+    def startConversation(self):#------------------------------------------------state2
         try:
             print '-' *80
             rospy.loginfo(" Start the state2")
             self.mimi.speak("Let's start conversation")
             self.conversationMethod()
+            return 3
         except rospy.ROSInterruptException:
             rospy.loginfo(" Interrupted")
             pass
 
-    def exitRoom(self):
+    def exitRoom(self):#---------------------------------------------------------state3
         try:
             print '-' *80
             rospy.loginfo(" Start the state3")
-            self.nav.movePlace('door')
+            self.nav.movePlace('start_position')
+            return 4
         except rospy.ROSInterruptException:
             rospy.loginfo(" Interrupted")
             pass
