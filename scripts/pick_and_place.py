@@ -53,10 +53,12 @@ class MimiControlClass():
         if motor_name == 5:
             m5_angle = Float64()
             m5_angle = value
+            self.sleep(0.1)
             self.m5_pub.publish(m5_angle)
         elif motor_name == 6:
             m6_angle = Float64()
             m6_angle = value
+            self.sleep(0.1)
             self.m6_pub.publish(m6_angle)
         rospy.sleep(2.0)
 
@@ -77,7 +79,7 @@ class NavigationClass():
         self.navigation_memorize_pub = rospy.Publisher('/navigation/memorize_place', String, queue_size = 1)#目的地を記憶
         self.navigation_command_pub = rospy.Publisher('/navigation/move_place', String, queue_size = 1)#ナビゲーション開始の命令
         #Subscriber
-        self.navigation_res_sub = rospy.Subscriber('/navigation/result', Bool, self.setPlace, self.movePlace)
+        self.navigation_res_sub = rospy.Subscriber('/navigation/result', Bool, self.getNavigationResultCB)
         
         self.navigation_result_flg = False
         self.mimi = MimiControlClass()
