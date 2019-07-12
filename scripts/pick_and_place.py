@@ -51,13 +51,14 @@ class MimiControlClass():
 
     def motorControl(self, motor_name, value):
         if motor_name == 5:
-            self.m5_angle.data = Float64()
-            self.m5_angle.data = value
-            self.m5_pub.publish(self.m5_angle)
+            m5_angle = Float64()
+            m5_angle = value
+            self.m5_pub.publish(m5_angle)
         elif motor_name == 6:
-            self.m6_angle.data = Float64()
-            self.m6_angle.data = value
-            self.m6_pub.publish(self.m6_angle)
+            m6_angle = Float64()
+            m6_angle = value
+            self.m6_pub.publish(m6_angle)
+        rospy.sleep(2.0)
 
     def speak(self, sentense):
         voice_cmd = '/usr/bin/picospeaker %s' %sentense
@@ -207,6 +208,7 @@ class PickObject():#----------------------------------------------------state1
         try:
             print '-' *80
             rospy.loginfo(" Start the state1")
+            self.mimi.motorControl(6,0.2)
             self.startObjectGrasp()
             self.armChangingPose('carry')
             rospy.loginfo(" Finish the state1")
