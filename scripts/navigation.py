@@ -13,6 +13,7 @@ from std_msgs.msg import String, Bool
 from geometry_msgs.msg import Twist, Quaternion
 from tf2_msgs.msg import TFMessage
 from sensor_msgs.msg import LaserScan
+from math import pi
 
 class Navigation:
     def __init__(self):
@@ -92,7 +93,7 @@ class Navigation:
             self.navigation_result_pub.publish(result)
             return 0
         ac = actionlib.SimpleActionClient('move_base', MoveBaseAction)
-        while not ac.wait_for_server(rospy.Duration(5.0)):
+        while not ac.wait_for_server(rospy.Duration(5.0)) and not rospy.is_shutdown():
             rospy.loginfo("Waiting for action client comes up...")
         rospy.loginfo("The server comes up")
         goal = MoveBaseGoal()
@@ -105,11 +106,11 @@ class Navigation:
         ac.send_goal(goal)
         rospy.loginfo("Sended Goal")
         while not rospy.is_shutdown():
-            if self.ac.get_state() == 1:
+            if ac.get_state() == 1:
                 rospy.loginfo("Got out of the obstacle")
-                rospy.sleep(2.0)
-                self.ac.send_goal(goal)
-                rospy.loginfo("Sended goal onmore")
+                #rospy.sleep(2.0)
+                #ac.send_goal(goal)
+                #rospy.loginfo("Sended goal onmore")
             if ac.get_state() == 3:
                 rospy.loginfo("Goal")
                 self.destination = 'Null'
@@ -117,12 +118,11 @@ class Navigation:
                 result.data = True
                 self.navigation_result_pub.publish(result)
                 rospy.loginfo("Published result")
-                self.setCostmapParam('False')
+                #self.setCostmapParam('False')
                 return 0
             elif ac.get_state() == 4:
                 rospy.loginfo("Buried in obstacle")
                 rospy.sleep(1.0)
-                rospy.loginfo("Clear costmap")
                 return 2
 
     def clearCostmap(self):#---------------------------------------------------state 3

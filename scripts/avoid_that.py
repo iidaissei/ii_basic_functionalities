@@ -24,13 +24,16 @@ class MimiControlClass():
 
     def motorControl(self, motor_name, value):
         if motor_name == 5:
-            self.m5_angle.data = Float64()
-            self.m5_angle.data = value
-            self.m5_pub.publish(self.m5_angle)
+            m5_angle = Float64()
+            m5_angle = value
+            self.m5_pub.publish(m5_angle)
+            rospy.loginfo(" Changing m5 pose")
         elif motor_name == 6:
-            self.m6_angle.data = Float64()
-            self.m6_angle.data = value
-            self.m6_pub.publish(self.m6_angle)
+            m6_angle = Float64()
+            m6_angle = value
+            self.m6_pub.publish(m6_angle)
+            rospy.loginfo(" Changing m6 pose")
+        rospy.sleep(1.0)
 
     def speak(self, sentense):
         voice_cmd = '/usr/bin/picospeaker %s' %sentense
@@ -90,7 +93,7 @@ class AvoidThat():
         try:
             print '-' *80
             rospy.loginfo(" Start the state0")
-            self.mimi.motorControl(6, 0.2)#正面を向く
+            self.mimi.motorControl(6,0.2)#正面を向く
             self.mimi.speak("I will go to the start position")
             self.nav.movePlace('start_position')
             rospy.sleep(3.0)
@@ -105,7 +108,7 @@ class AvoidThat():
             print '-' *80
             rospy.loginfo(" Start the state1")
             self.mimi.speak("I will go to the goal_position")
-            self.loginfo(" Move to goal_position")
+            rospy.loginfo(" Move to goal_position")
             self.nav.movePlace('goal_position')
             rospy.sleep(3.0)
             rospy.loginfo(" Finished the state1")
@@ -123,9 +126,9 @@ if __name__ == '__main__':
         while not rospy.is_shutdown() and not state == 2:
             if state == 0:
                 state = at.moveStartPosition()
-            elif state == 1:
+            if state == 1:
                 state = at.moveDestination()
-        rospy.loginfo(" Finished Avoid_That"
+        rospy.loginfo(" Finished Avoid_That")
     except rospy.ROSInterruptException:
         rospy.loginfo(" Interrupted")
         pass
