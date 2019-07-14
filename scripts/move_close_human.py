@@ -8,7 +8,7 @@ import actionlib
 import std_srvs.srv
 import time
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
-from std_msgs.msg import String, Bool
+from std_msgs.msg import String, Bool, Float64
 from geometry_msgs.msg import Twist, Quaternion, Point, PoseWithCovarianceStamped
 from tf2_msgs.msg import TFMessage
 from sensor_msgs.msg import LaserScan
@@ -52,7 +52,7 @@ class MoveClosePerosn():
         #Publisher
         self.move_close_person_flg = rospy.Publisher('/move_close_person/stop', String, queue_size = 1)
         #Subscriber
-        rospy.Subscriber('/recog_obj', String, self.findPerson)
+        rospy.Subscriber('/recog_obj', String, self.recogObject)
         rospy.Subscriber('/object/xyz_centroid', Point , self.navigation, callback_args = 2)
         rospy.Subscriber('/amcl_pose', PoseWithCovarianceStamped, self.navigation, callback_args = 3) 
         rospy.Subscriber('/move_close_person/start', String, self.getStartFlgCB)
@@ -61,9 +61,21 @@ class MoveClosePerosn():
         self.location_pose_x = 0
         self.location_pose_y = 0
         self.location_pose_w = 0
+        self.person_flg = 'Null'
+        self.mimi = MimiControlClass()
+        self.person_flg = False
 
     def getStartFlgCB(self, receive_msg):
         self.start_flg = receive_msg.data
+
+    def recogObject(self, receive_msg):
+        obj = receive_msg.data
+        obj_list = obj.split(" ")
+        rospy.sleep(0.1)
+        for i in range(len(obj_list)):
+            if obj_list[i] == 'person':
+                self.person_flg = True
+                #print 'person'
  
     def waitTopic(self):#---------------------------state0
         while not rospy.is_shutdown():
@@ -72,22 +84,27 @@ class MoveClosePerosn():
             else:
                 return 0
 
-    def findPerson(self, receive_msg):#--------------------------state1
+    def findPerson(self):#--------------------------state1
         try:
             rospy.loginfo(" Start  the state1")
-            self.mimi.motorControl(6, 0.3)
-            while not rospy.is_shutdown() and not receive_msg.data == 'person':
-                for i in range(15):
-                    if i <= 5:
+            #self.mimi.motorControl(6, 0.3)
+            while not rospy.is_shutdown() and not self.person_flg == True:
+                for i in range(24):
+                    if i <= 8 and self.person_flg == False:
                         self.mimi.angularControl(0.61)
+                        rospy.sleep(0.1)
                         rospy.sleep(0.5)
-                    elif i >5:
+                    elif i >8 and self.person_flg == False:
                         self.mimi.angularControl(-0.61)
+                        rospy.sleep(0.1)
                         rospy.sleep(0.5)
-                    if i == 15:
+                    if i == 24 and self.person_flg == False:
                         rospy.loginfo(" Could not find person")
                         #self.mimi.linearControl(2.0)
+                        for i in range(16):
+                            self.mimi.angularControl(0.61)
                         i == 1
+            self.person_flg = False
             rospy.loginfo(" Find Person")
             rospy.loginfo(" Finished the state1")
             return 2
@@ -98,10 +115,10 @@ class MoveClosePerosn():
     def navigation(self, object_xyz, amcl_pose):#---------------state2
         try:
             rospy.loginfo(" Start the state2")
-            human_point = receive_msg.data
-            amcl_pose.pose.pose.position.x += human_point.x
-            amcl_pose.pose.pose.position.y += human_point.y
-            amcl_pose.pose.pose.position.z += human_point.z
+            #human_point = object_xyz
+            amcl_pose.pose.pose.position.x += object_xyz.x
+            amcl_pose.pose.pose.position.y += object_xyz.y
+            amcl_pose.pose.pose.position.z += object_xyz.z
             self.location_pose_x = amcl_pose.pose.pose.position.x
             self.location_pose_y = amcl_pose.pose.pose.position.y   
             self.location_pose_w = amcl_pose.pose.pose.position.z
