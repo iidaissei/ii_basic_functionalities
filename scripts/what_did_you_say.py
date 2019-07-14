@@ -51,13 +51,15 @@ class MimiControlClass():
 
     def motorControl(self, motor_name, value):
         if motor_name == 5:
-            self.m5_angle.data = Float64()
-            self.m5_angle.data = value
-            self.m5_pub.publish(self.m5_angle)
+            m5_angle = Float64()
+            m5_angle = value
+            rospy.sleep(0.1)
+            self.m5_pub.publish(m5_angle)
         elif motor_name == 6:
-            self.m6_angle.data = Float64()
-            self.m6_angle.data = value
-            self.m6_pub.publish(self.m6_angle)
+            m6_angle = Float64()
+            m6_angle = value
+            rospy.sleep(0.1)
+            self.m6_pub.publish(m6_angle)
 
     def speak(self, sentense):
         voice_cmd = '/usr/bin/picospeaker %s' %sentense
@@ -76,7 +78,7 @@ class NavigationClass():
         self.navigation_memorize_pub = rospy.Publisher('/navigation/memorize_place', String, queue_size = 1)#目的地を記憶
         self.navigation_command_pub = rospy.Publisher('/navigation/move_place', String, queue_size = 1)#ナビゲーション開始の命令
         #Subscriber
-        self.navigation_res_sub = rospy.Subscriber('/navigation/result', Bool, self.setPlace, self.movePlace)
+        self.navigation_res_sub = rospy.Subscriber('/navigation/result', Bool, self.getNavigationResultCB)
         
         self.navigation_result_flg = False
         self.mimi = MimiControlClass()
@@ -108,44 +110,44 @@ class NavigationClass():
         self.navigation_result_flg = False
         rospy.loginfo(" Has arrived!") 
         
-class FindPerson():
-    def __init__(self):
-        #Subscriber
-        rospy.Subscriber('/recog_obj', String, self.findPerson)
-        
-    def findPerson(self, receive_msg):
-        objects = receive_msg.data
-        object_list = objects.split(' ')
-        for i in range(len(object_list)):
-            if object_list[i] == "person":
-                rospy.sleep(5.0)
 
 class WhatDidYouSay():
     def __init__(self):
         #Publisher
         self.conversation_start_pub = rospy.Publisher('conversation/start', Bool, queue_size = 1)
+        self.move_close_person_pub = rospy.Publisher('/move_close_person/start', String, queue_size = 1)
         #Subscriber
-        self.conversation_stop_sub = rospy.Subscriber('conversation/stop', Bool, self.conversation_stopCB)
+        rospy.Subscriber('conversation/stop', Bool, self.conversation_stopCB)
+        rospy.Subscriber('/move_close_person/stop', String, self.move_close_personCB)
         
         self.nav = NavigationClass()
         self.mimi = MimiControlClass()
-        self.conversation_stop_flg = False
+        self.conversation_stop_flg = Bool()
+        self.move_close_person_flg = 'Null'
 
     def conversation_stopCB(self, receive_msg):
         self.conversation_stop_flg = receive_msg
 
+    def move_close_personCB(self, result_msg):
+        self.move_close_person_flg = result_msg.data
+
+
     def conversationMethod(self):
         try:
+            question_number = 1
             result = Bool()
-            result.data = True
-            for question_number in range(4):
-                rospy.loginfo(" Question Number: " + question_number)
+            result.data = False
+            while not rospy.is_shutdown() and not question_number == 5:
+                rospy.loginfo(" Question Number: " + str(question_number))
+                rospy.sleep(0.1)
                 self.conversation_start_pub.publish(result)
                 rospy.loginfo(" Published 'conversation/start' Topic")
-                while self.conversation_stop_flg == False:
+                while not rospy.is_shutdown() and not self.conversation_stop_flg == True:
                     rospy.loginfo(" Waiting for topic...")
                     rospy.sleep(1.5)
+                self.conversation_stop_flg = True
                 rospy.loginfo(" Published 'conversation/stop' Topic")
+                question_number += 1
             rospy.loginfo(" Finish conversation")
         except rospy.ROSInterruptException:
             rospy.loginfo(" Interrupted")
@@ -166,13 +168,20 @@ class WhatDidYouSay():
             rospy.loginfo(" Interrupted")
             pass
 
-    def moveClosePeople(self):#--------------------------------------------------state1
+    def moveClosePerson(self):#--------------------------------------------------state1
         try:
             print '-' *80
             rospy.loginfo(" Start the state1")
             self.mimi.motorControl(6, 0.2)#顔の角度を指定
-            #人を発見する処理は保留
+            data = String()
+            data.data = 'start'
+            self.move_close_person_pub.publish(data)
+            while not rospy.is_shutdown() and not self.move_close_person_flg == 'stop':
+                rospy.loginfo(" Waiting for topic")
+                rospy.sleep(1.0)
+            self.move_close_person_flg = 'Null'
             self.mimi.speak("Hello. I'm mimi")
+            rospy.sleep(1.0)
             return 2
         except rospy.ROSInterruptException:
             rospy.loginfo(" Interrupted")
@@ -203,13 +212,13 @@ class WhatDidYouSay():
 if __name__ == '__main__':
     rospy.init_node("what_did_you_say", anonymous = True)
     try:
-        state = 0
+        state = 1
         wds = WhatDidYouSay()
         while not rospy.is_shutdown() and not state == 4:
             if state == 0:
                 state = wds.enterRoom()
             elif state == 1:
-                state = wds.moveClosePeople()
+                state = wds.moveClosePerson()
             elif state == 2:
                 state = wds.startConversation()
             elif state == 3:

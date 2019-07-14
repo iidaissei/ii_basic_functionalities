@@ -21,7 +21,6 @@ class MimiControlClass():
         self.m5_pub = rospy.Publisher('/m5_controller/command', Float64, queue_size = 1)
         self.m6_pub = rospy.Publisher('/m6_controller/command', Float64, queue_size = 1)
         self.changing_pose_pub = rospy.Publisher('/arm/changing_pose_req', String, queue_size = 1)#manipulateしたあとの変形
-        
 
     def motorControl(self, motor_name, value):
         if motor_name == 5:
@@ -73,7 +72,7 @@ class NavigationClass():
         while self.navigation_result_flg == False and not rospy.is_shutdown():
             self.navigation_memorize_pub.publish(place_name)
             rospy.loginfo(" Waiting for result")
-            time.sleep(2.0)
+            rospy.sleep(2.0)
         self.navigation_result_flg = False
         rospy.loginfo(" Memorization complete!")
         self.mimi.speak("I remembered the location og the " + place_name)
