@@ -56,6 +56,7 @@ class MoveClosePerosn():
         rospy.Subscriber('/object/xyz_centroid', Point , self.navigation, callback_args = 2)
         rospy.Subscriber('/amcl_pose', PoseWithCovarianceStamped, self.navigation, callback_args = 3) 
         rospy.Subscriber('/move_close_person/start', String, self.getStartFlgCB)
+        self.sub_tf  = rospy.Subscriber('/tf', TFMessage, self.getTfCB)
 
         self.start_flg = 'Null'
         self.location_pose_x = 0
@@ -77,6 +78,9 @@ class MoveClosePerosn():
                 self.person_flg = True
                 #print 'person'
  
+    def getTfCB(self, receive_msg):
+        self.sub_tf = receive_msg
+
     def waitTopic(self):#---------------------------state0
         while not rospy.is_shutdown():
             if self.start_flg == 'start':
@@ -116,12 +120,17 @@ class MoveClosePerosn():
         try:
             rospy.loginfo(" Start the state2")
             #human_point = object_xyz
-            amcl_pose.pose.pose.position.x += object_xyz.x
-            amcl_pose.pose.pose.position.y += object_xyz.y
-            amcl_pose.pose.pose.position.z += object_xyz.z
-            self.location_pose_x = amcl_pose.pose.pose.position.x
-            self.location_pose_y = amcl_pose.pose.pose.position.y   
-            self.location_pose_w = amcl_pose.pose.pose.position.z
+
+            pose = self.sub_tf
+            if pose.transforms[0].header.frame_id == 'odom':
+                self.location_pose_x = pose.transforms[0].transform.translation.x
+                self.location_pose_y = pose.transforms[0].transform.translation.y
+                self.location_pose_w = pose.transforms[0].transform.rotation.z
+                self.location_pose_w += 1.5 * self.location_pose_w * self.location_pose_w *self.location_pose_w
+                self.location_list.append([self.location_name, self.location_pose_x, self.location_pose_y, self.location_pose_w])
+ 
+            self.location_pose.x += object_xyz.x
+            self.location_pose.y += object_xyz.y
             ac = actionlib.SimpleActionClient('move_base', MoveBaseAction)
             while not ac.wait_for_server(rospy.Duration(5.0)) and not rospy.is_shutdown():
                 rospy.loginfo("Waiting for action client comes up...")
