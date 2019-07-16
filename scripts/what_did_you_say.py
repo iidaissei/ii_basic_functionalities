@@ -45,17 +45,10 @@ class KobukiControlClass():
 class MimiControlClass():
     def __init__(self):
         #Publisher
-        self.m5_pub = rospy.Publisher('/m5_controller/command', Float64, queue_size = 1)
-        self.m6_pub = rospy.Publisher('m6_controller/command', Float64, queue_size = 1)
-        self.changing_pose_pub = rospy.Publisher('/arm/changing_pose_req', String, queue_size = 1)#manipulateしたあとの変形
+        self.m6_pub = rospy.Publisher('/m6_controller/command', Float64, queue_size = 1)
 
     def motorControl(self, motor_name, value):
-        if motor_name == 5:
-            m5_angle = Float64()
-            m5_angle = value
-            rospy.sleep(0.1)
-            self.m5_pub.publish(m5_angle)
-        elif motor_name == 6:
+        if motor_name == 6:
             m6_angle = Float64()
             m6_angle = value
             rospy.sleep(0.1)
@@ -64,12 +57,6 @@ class MimiControlClass():
     def speak(self, sentense):
         voice_cmd = '/usr/bin/picospeaker %s' %sentense
         subprocess.call(voice_cmd.strip().split(' '))
-
-    def armChangingPose(self, receive_msg):
-        pose_req = String()
-        pose_req.data = receive_msg
-        self.changing_pose_pub.publish(pose_req)
-        rospy.sleep(1.0)
 
     
 class NavigationClass():
@@ -161,7 +148,8 @@ class WhatDidYouSay():
             while self.kobuki.front_laser_dist < 0.88:#試走場のドアの幅を参考
                 rospy.loginfo(" Waiting for door open")
                 rospy.sleep(2.0)
-            for i in range(3):
+            rospy.sleep(1.5)
+            for i in range(4):
                 self.kobuki.linearControl(1.0)
             return 1
         except rospy.ROSInterruptException:
