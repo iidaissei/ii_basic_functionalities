@@ -53,18 +53,19 @@ class MoveClosePerosn():
         self.move_close_person_flg = rospy.Publisher('/move_close_person/stop', String, queue_size = 1)
         #Subscriber
         rospy.Subscriber('/recog_obj', String, self.recogObject)
-        rospy.Subscriber('/object/xyz_centroid', Point , self.navigation, callback_args = 2)
+        rospy.Subscriber('/object/xyz_centroid', Point , self.getObject_xy)
         rospy.Subscriber('/amcl_pose', PoseWithCovarianceStamped, self.navigation, callback_args = 3) 
         rospy.Subscriber('/move_close_person/start', String, self.getStartFlgCB)
         self.sub_tf  = rospy.Subscriber('/tf', TFMessage, self.getTfCB)
 
         self.start_flg = 'Null'
+        self.person_flg = False
         self.location_pose_x = 0
         self.location_pose_y = 0
         self.location_pose_w = 0
-        self.person_flg = 'Null'
+        self.object_x = 0
+        self.object_y = 0
         self.mimi = MimiControlClass()
-        self.person_flg = False
 
     def getStartFlgCB(self, receive_msg):
         self.start_flg = receive_msg.data
@@ -76,8 +77,11 @@ class MoveClosePerosn():
         for i in range(len(obj_list)):
             if obj_list[i] == 'person':
                 self.person_flg = True
-                #print 'person'
  
+    def getObject_xy(self, receive_msg):
+        self.object_x = receive_msg.x
+        self.object_y = receive_msg.y
+
     def getTfCB(self, receive_msg):
         self.sub_tf = receive_msg
 
@@ -116,11 +120,8 @@ class MoveClosePerosn():
             rospy.loginfo(" Interrupted")
             pass
 
-    def navigation(self, object_xyz, amcl_pose):#---------------state2
+    def getMimiPosition(self):
         try:
-            rospy.loginfo(" Start the state2")
-            #human_point = object_xyz
-
             pose = self.sub_tf
             if pose.transforms[0].header.frame_id == 'odom':
                 self.location_pose_x = pose.transforms[0].transform.translation.x
@@ -128,9 +129,17 @@ class MoveClosePerosn():
                 self.location_pose_w = pose.transforms[0].transform.rotation.z
                 self.location_pose_w += 1.5 * self.location_pose_w * self.location_pose_w *self.location_pose_w
                 self.location_list.append([self.location_name, self.location_pose_x, self.location_pose_y, self.location_pose_w])
+        except rospy.ROSInterruptException:
+            rospy.loginfo(" Interrupted")
+            pass
  
-            self.location_pose.x += object_xyz.x
-            self.location_pose.y += object_xyz.y
+
+    def navigation(self):#---------------state2
+        try:
+            rospy.loginfo(" Start the state2")
+            #human_point = object_xyz
+            self.location_pose.x += self.object_x
+            self.location_pose.y += self.object_y
             ac = actionlib.SimpleActionClient('move_base', MoveBaseAction)
             while not ac.wait_for_server(rospy.Duration(5.0)) and not rospy.is_shutdown():
                 rospy.loginfo("Waiting for action client comes up...")
@@ -166,7 +175,7 @@ class MoveClosePerosn():
 if __name__ == '__main__':
     rospy.init_node("move_close_person", anonymous = True)
     try:
-        state = 0
+        state = 2
         mcp = MoveClosePerosn()
         while not rospy.is_shutdown() and not state == 3:
             if state == 0:
