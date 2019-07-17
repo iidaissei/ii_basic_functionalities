@@ -30,7 +30,7 @@ class MimiControlClass():
         rospy.sleep(1.0)
 
     def speak(self, sentense):
-        voice_cmd = '/usr/bin/picospeaker %s' %sentense
+        voice_cmd = '/usr/bin/picospeaker -r -15 -p 4 %s' %sentense
         subprocess.call(voice_cmd.strip().split(' '))
 
 
@@ -72,11 +72,11 @@ class AvoidThat():
             rospy.loginfo(" Start the state0")
             self.mimi.motorControl(6, 0.3)#正面を向く
             self.mimi.speak("I will go to the start position")
-            rospy.loginfo(" Move to the start_position")
+            rospy.loginfo(" Move to the shelf")
             rospy.sleep(1.0)
-            self.nav.movePlace('start_position')
+            self.nav.movePlace('shelf')
             rospy.sleep(1.0)
-            self.mimi.speak(" I arrived the start_position")
+            self.mimi.speak(" I arrived the shelf")
             rospy.loginfo(" Finished the state0")
             rospy.sleep(1.0)
             return 1
@@ -88,12 +88,12 @@ class AvoidThat():
         try:
             print '-' *80
             rospy.loginfo(" Start the state1")
-            self.mimi.speak("I will go to the goal_position")
-            rospy.loginfo(" Move to the goal_position")
+            self.mimi.speak("I will go to the entrance")
+            rospy.loginfo(" Move to the entrance")
             rospy.sleep(1.0)
-            self.nav.movePlace('goal_position')
+            self.nav.movePlace('entrance')
             rospy.sleep(1.0)
-            self.mimi.speak("I arrived the goal_position")
+            self.mimi.speak("I arrived the entrance")
             rospy.loginfo(" Finished the state1")
             rospy.sleep(2.0)
             self.mimi.speak("Finished Avoid That")

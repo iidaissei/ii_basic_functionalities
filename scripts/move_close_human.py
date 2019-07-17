@@ -152,6 +152,7 @@ class MoveClosePerosn():
             rospy.loginfo(" Start the state3")
             while not rospy.is_shutdown() and self.object_xy_flg = True:
                 self.getObject_xy()
+            rospy.sleep(2.0)
             self.location_pose.x += self.object_x
             self.location_pose.y += self.object_y
             ac = actionlib.SimpleActionClient('move_base', MoveBaseAction)

@@ -55,7 +55,7 @@ class MimiControlClass():
             self.m6_pub.publish(m6_angle)
 
     def speak(self, sentense):
-        voice_cmd = '/usr/bin/picospeaker %s' %sentense
+        voice_cmd = '/usr/bin/picospeaker -r -18 -p 4%s' %sentense
         subprocess.call(voice_cmd.strip().split(' '))
 
     
@@ -145,7 +145,9 @@ class WhatDidYouSay():
             print '-' *80
             rospy.loginfo(" Start the state0")
             self.nav.setPlace('start_position')#スタート地点を記憶
-            while self.kobuki.front_laser_dist < 0.88:#試走場のドアの幅を参考
+            distance_to_door = self.front_laser_dist
+            rospy.sleep(0.2)
+            while self.kobuki.front_laser_dist < distance_to_door + 0.88:#試走場のドアの幅を参考
                 rospy.loginfo(" Waiting for door open")
                 rospy.sleep(2.0)
             rospy.sleep(1.5)

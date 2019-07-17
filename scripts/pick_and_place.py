@@ -46,7 +46,7 @@ class MimiControlClass():
     def __init__(self):
         #Publisher
         self.m5_pub = rospy.Publisher('/m5_controller/command', Float64, queue_size = 1)
-        self.m6_pub = rospy.Publisher('m6_controller/command', Float64, queue_size = 1)
+        self.m6_pub = rospy.Publisher('/m6_controller/command', Float64, queue_size = 1)
         self.changing_pose_pub = rospy.Publisher('/arm/changing_pose_req', String, queue_size = 1)#manipulateしたあとの変形
 
     def motorControl(self, motor_name, value):
@@ -60,10 +60,9 @@ class MimiControlClass():
             m6_angle = value
             self.sleep(0.1)
             self.m6_pub.publish(m6_angle)
-        rospy.sleep(2.0)
 
     def speak(self, sentense):
-        voice_cmd = '/usr/bin/picospeaker %s' %sentense
+        voice_cmd = '/usr/bin/picospeaker -r -15 -p 4 %s' %sentense
         subprocess.call(voice_cmd.strip().split(' '))
 
     def armChangingPose(self, receive_msg):
@@ -92,7 +91,6 @@ class NavigationClass():
         place_name = receive_msg
         rospy.loginfo(" Memorizing...")
         self.navigation_memorize_pub.publish(place_name)
-        rospy.loginfo(" Publeshed topic")
         while self.navigation_result_flg == False and not rospy.is_shutdown():
             self.navigation_memorize_pub.publish(place_name)
             rospy.loginfo(" Waiting for result")
@@ -105,9 +103,10 @@ class NavigationClass():
         place_name = String()
         place_name = receive_msg
         self.navigation_command_pub.publish(place_name)
-        rospy.loginfo(" Moving...")
         while self.navigation_result_flg == False and not rospy.is_shutdown():
-            rospy.sleep(3.0)
+            rospy.sleep(2.5)
+            rospy.loginfo(" Moving...")
+            self.mimi.speak("Moving")
         self.navigation_result_flg = False
         rospy.loginfo(" Has arrived!")
     
@@ -142,7 +141,7 @@ class ObjectRecognizeClass():
         self.object_recog_flg = result_msg.data
 
 
-class MoveObject( ObjectRecognizeClass, NavigationClass, MimiControlClass, KobukiControlClass ):#-------------state0
+class MoveObject():#---------------------------------------------------state0
     def __init__(self):
         self.object_req = ObjectRecognizeClass()
         self.nav = NavigationClass()
