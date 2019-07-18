@@ -24,7 +24,7 @@ class Navigation:
         self.navigation_result_pub = rospy.Publisher('/navigation/result', Bool, queue_size = 1)
 
         self.location_name = 'Null'
-        self.location_list = [['shelf', 2.68, 1.56, -0.000335*pi], ['entrance', 6.86, -4.8, 0.00333*pi]]
+        self.location_list = [['shelf', 2.60, 1.50, 0.00252*pi], ['entrance', 5.66, -4.0, 0.004*pi]]
         self.location_pose_x = 0
         self.location_pose_y = 0
         self.location_pose_w = 0
