@@ -14,11 +14,13 @@ from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Pose, PoseWithCovarianceStamped, Point, Quaternion, Twist
 from std_msgs.msg import String, Bool, Int8, Float64
 
-#Hello
-class KobukiControlClass():
+
+class MimiControlClass():
     def __init__(self):
         #Publisher
         self.cmd_vel_pub = rospy.Publisher('/cmd_vel_mux/input/teleop', Twist, queue_size = 1)#kobukiの前進後進
+        self.m6_pub = rospy.Publisher('/m6_controller/command', Float64, queue_size = 1)
+
         #Subscriber
         self.laser_sub = rospy.Subscriber('/scan', LaserScan, self.getLaserCB)
         
@@ -42,11 +44,6 @@ class KobukiControlClass():
         self.twist_cmd.angular.z = 0
 
 
-class MimiControlClass():
-    def __init__(self):
-        #Publisher
-        self.m6_pub = rospy.Publisher('/m6_controller/command', Float64, queue_size = 1)
-
     def motorControl(self, motor_name, value):
         if motor_name == 6:
             m6_angle = Float64()
@@ -55,7 +52,7 @@ class MimiControlClass():
             self.m6_pub.publish(m6_angle)
 
     def speak(self, sentense):
-        voice_cmd = '/usr/bin/picospeaker -r -18 -p 4%s' %sentense
+        voice_cmd = '/usr/bin/picospeaker -r -18 -p 4 %s' %sentense
         subprocess.call(voice_cmd.strip().split(' '))
 
     
@@ -144,15 +141,21 @@ class WhatDidYouSay():
         try:
             print '-' *80
             rospy.loginfo(" Start the state0")
-            self.nav.setPlace('start_position')#スタート地点を記憶
-            distance_to_door = self.front_laser_dist
+            rospy.sleep(0.5)
+            self.nav.movePlace('entrance')#スタート地点に移動
             rospy.sleep(0.2)
-            while self.kobuki.front_laser_dist < distance_to_door + 0.88:#試走場のドアの幅を参考
+            distance_to_door = self.front_laser_dist
+            self.mimi.speak("Please open the door")
+            while not rospy.is_shutdown() and self.kobuki.front_laser_dist <= distance_to_door + 0.88:#試走場のドアの幅を参考
                 rospy.loginfo(" Waiting for door open")
-                rospy.sleep(2.0)
-            rospy.sleep(1.5)
+                rospy.sleep(1.0)
+            self.mimi.speak("Thank you")
+            rospy.sleep(1.0)
             for i in range(4):
-                self.kobuki.linearControl(1.0)
+                self.kobuki.linearControl(0.1)
+                rospy.sleep(0.5)
+            rospy.sleep(1.0)
+            rospy.loginfo(" Finished the state0")
             return 1
         except rospy.ROSInterruptException:
             rospy.loginfo(" Interrupted")
@@ -168,10 +171,11 @@ class WhatDidYouSay():
             self.move_close_person_pub.publish(data)
             while not rospy.is_shutdown() and not self.move_close_person_flg == 'stop':
                 rospy.loginfo(" Waiting for topic")
-                rospy.sleep(1.0)
+                rospy.sleep(1.5)
             self.move_close_person_flg = 'Null'
             self.mimi.speak("Hello. I'm mimi")
             rospy.sleep(1.0)
+            rospy.loginfo(" Finished the state1")
             return 2
         except rospy.ROSInterruptException:
             rospy.loginfo(" Interrupted")
@@ -182,7 +186,9 @@ class WhatDidYouSay():
             print '-' *80
             rospy.loginfo(" Start the state2")
             self.mimi.speak("Let's start conversation")
+            rospy.sleep(0.5)
             self.conversationMethod()
+            rospy.loginfo(" Finished the state2")
             return 3
         except rospy.ROSInterruptException:
             rospy.loginfo(" Interrupted")
@@ -192,7 +198,11 @@ class WhatDidYouSay():
         try:
             print '-' *80
             rospy.loginfo(" Start the state3")
-            self.nav.movePlace('start_position')
+            rospy.sleep(0.5)
+            self.nav.movePlace('enterRoom')
+            rospy.sleep(1.0)
+            rospy.loginfo(" Finished the state3")
+            self.mimi.speak("Finished What did you say")
             return 4
         except rospy.ROSInterruptException:
             rospy.loginfo(" Interrupted")

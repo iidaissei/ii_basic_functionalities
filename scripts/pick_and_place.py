@@ -15,13 +15,17 @@ from geometry_msgs.msg import Pose, PoseWithCovarianceStamped, Point, Quaternion
 from std_msgs.msg import String, Bool, Int8, Float64
 
 
-class KobukiControlClass():
+class MimiControlClass():
     def __init__(self):
         #Publisher
         self.cmd_vel_pub = rospy.Publisher('/cmd_vel_mux/input/teleop', Twist, queue_size = 1)#kobukiの前進後進
+        self.m5_pub = rospy.Publisher('/m5_controller/command', Float64, queue_size = 1)
+        self.m6_pub = rospy.Publisher('/m6_controller/command', Float64, queue_size = 1)
+        self.changing_pose_pub = rospy.Publisher('/arm/changing_pose_req', String, queue_size = 1)#manipulateしたあとの変形
+
         #Subscriber
         self.laser_sub = rospy.Subscriber('/scan', LaserScan, self.getLaserCB)
-        
+ 
         self.min_laser_dist = 999.9
         self.front_laser_dist = 999.9
         self.twist_cmd = Twist()
@@ -40,14 +44,6 @@ class KobukiControlClass():
         self.twist_cmd.angular.z = angular_num
         self.cmd_vel_pub.publish(self.twist_cmd)
         self.twist_cmd.angular.z = 0
-
-
-class MimiControlClass():
-    def __init__(self):
-        #Publisher
-        self.m5_pub = rospy.Publisher('/m5_controller/command', Float64, queue_size = 1)
-        self.m6_pub = rospy.Publisher('/m6_controller/command', Float64, queue_size = 1)
-        self.changing_pose_pub = rospy.Publisher('/arm/changing_pose_req', String, queue_size = 1)#manipulateしたあとの変形
 
     def motorControl(self, motor_name, value):
         if motor_name == 5:
@@ -68,8 +64,8 @@ class MimiControlClass():
     def armChangingPose(self, receive_msg):
         pose_req = String()
         pose_req.data = receive_msg
+        rospy.sleep(0.1)
         self.changing_pose_pub.publish(pose_req)
-        rospy.sleep(1.0)
 
     
 class NavigationClass():
@@ -146,17 +142,13 @@ class MoveObject():#---------------------------------------------------state0
         self.object_req = ObjectRecognizeClass()
         self.nav = NavigationClass()
         self.mimi = MimiControlClass()
-        self.kobuki = KobukiControlClass()
-
-    #def frontObject(self, receive_msg):
-    #    self.angularControl(0.61)#約35度
 
     def approachObjectA(self):#手動で調整する場合
         for i in range(4):
-            self.kobuki.linearControl(-0.1)
+            self.mimi.linearControl(-0.1)
             rospy.sleep(0.5)
         for i in range(5):
-            self.kobuki.angularControl(-1.0)
+            self.mimi.angularControl(-0.61)
             rospy.sleep(0.5)
  
     def master(self):
@@ -209,9 +201,12 @@ class PickObject():#----------------------------------------------------state1
         try:
             print '-' *80
             rospy.loginfo(" Start the state1")
-            self.mimi.motorControl(6,0.2)
+            self.mimi.motorControl(6, 0.2)
+            rospy.sleep(0.5)
             self.startObjectGrasp()
+            rospy.sleep(0.5)
             self.armChangingPose('carry')
+            rospy.sleep(0.5)
             rospy.loginfo(" Finish the state1")
             return 2
         except rospy.ROSInterruptException:
@@ -246,7 +241,7 @@ class PlaceObject():#-----------------------------------------------------------
         try:
             print '-' *80
             rospy.loginfo(" Start the state2")
-            self.nav.movePlace('')#競技開始前に場所を指定する
+            self.nav.movePlace('shelf')#競技開始前に場所を指定する
             self.statrObjectPlace()
             self.mimi.armChangingPose('carry')
             self.nav.movePlace('table')

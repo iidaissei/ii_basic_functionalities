@@ -119,10 +119,10 @@ class MoveClosePerosn():
                             self.mimi.angularControl(0.61)
                         i == 1
             self.person_flg = False
-            self.mimi.speak("I found a questioner")
+            #self.mimi.speak("I found a human")
             rospy.loginfo(" Find Person")
             rospy.loginfo(" Finished the state1")
-            rospy.sleep(2.0)
+            rospy.sleep(1.0)
             return 2
         except rospy.ROSInterruptException:
             rospy.loginfo(" Interrupted")
@@ -131,6 +131,7 @@ class MoveClosePerosn():
     def getMimiPosition(self):#----------------------------------------------state2
         try:
             rospy.loginfo(" Start the state1")
+            rospy.sleep(1.0)
             while not rospy.is_shutdown() and self.sub_tf_flg = True:
                 self.getMimiPosition()
             self.sub_tf_flg = False
@@ -150,11 +151,12 @@ class MoveClosePerosn():
     def navigation(self):#---------------------------------------------------state3
         try:
             rospy.loginfo(" Start the state3")
+            rospy.sleep(2.0)
             while not rospy.is_shutdown() and self.object_xy_flg = True:
                 self.getObject_xy()
-            rospy.sleep(2.0)
             self.location_pose.x += self.object_x
             self.location_pose.y += self.object_y
+            rospy.sleep(1.0)
             ac = actionlib.SimpleActionClient('move_base', MoveBaseAction)
             while not ac.wait_for_server(rospy.Duration(5.0)) and not rospy.is_shutdown():
                 rospy.loginfo(" Waiting for action client comes up...")
@@ -172,21 +174,22 @@ class MoveClosePerosn():
             while not rospy.is_shutdown():
                 if ac.get_state() == 1:
                     rospy.loginfo(" Got out of the obstacle")
-                    rospy.sleep(1.0)
+                    rospy.sleep(1.5)
                 elif ac.get_state() == 3:
                     self.speak("Has arrived")
                     rospy.loginfo(" Has arrived")
-                    rospy.sleep(1.0)
+                    rospy.sleep(0.2)
                     rospy.loginfo(" Finished the state 3")
                     result = String()
                     result.data = 'stop'
-                    rospy.sleep(0.5)
+                    rospy.sleep(0.2)
                     self.move_close_person_pub.publish(result)
+                    self.mimi.speak("I found a human")
                     rospy.loginfo(" Finished move_close_person")
                     return 4
                 elif ac.get_state() == 4:
                     rospy.loginfo(" Buried in obstacle")
-                    rospy.sleep(1.0)
+                    rospy.sleep(1.5)
                     return 3
         except rospy.ROSInterruptException:
             rospy.loginfo(" Interrupted")
