@@ -54,7 +54,7 @@ class NavigationClass():
         place_name = receive_msg
         self.navigation_command_pub.publish(place_name)
         while self.navigation_result_flg == False and not rospy.is_shutdown():
-            rospy.sleep(2.5)
+            rospy.sleep(4.5)
             rospy.loginfo(" Mooving...")
             self.mimi.speak("Moving")
         self.navigation_result_flg = False
@@ -71,7 +71,7 @@ class AvoidThat():
             print '-' *80
             rospy.loginfo(" Start the state0")
             self.mimi.motorControl(6, 0.3)#正面を向く
-            self.mimi.speak("I will go to the start position")
+            self.mimi.speak("Move to the front of the shelf")
             rospy.loginfo(" Move to the shelf")
             rospy.sleep(1.0)
             self.nav.movePlace('shelf')
@@ -88,7 +88,7 @@ class AvoidThat():
         try:
             print '-' *80
             rospy.loginfo(" Start the state1")
-            self.mimi.speak("I will go to the entrance")
+            self.mimi.speak("Move to the entrance")
             rospy.loginfo(" Move to the entrance")
             rospy.sleep(1.0)
             self.nav.movePlace('entrance')
