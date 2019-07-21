@@ -2,33 +2,37 @@
 # -*- coding: utf-8 -*-
 
 import rospy
-import rosparam
 import tf 
 import math
 import actionlib
-import std_srvs.srv
 import time
+from  std_srvs.srv import Empty
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from std_msgs.msg import String, Bool
 from geometry_msgs.msg import Twist, Quaternion
 from tf2_msgs.msg import TFMessage
 from sensor_msgs.msg import LaserScan
-from math import pi
+
 
 class Navigation:
     def __init__(self):
+        #Publisher
         rospy.Subscriber('/navigation/memorize_place', String, self.getMemorizePlaceCB)
         rospy.Subscriber('/navigation/move_place', String, self.getDestinationCB)
         self.sub_tf  = rospy.Subscriber('/tf', TFMessage, self.getTfCB)
-        
+        #Subscriber
         self.navigation_result_pub = rospy.Publisher('/navigation/result', Bool, queue_size = 1)
+        #Service
+        rospy.wait_for_service('/move_base/clear_costmaps')
+        self.clear_costmaps = rospy.ServiceProxy('move_base/clear_costmaps', Empty)
 
         self.location_name = 'Null'
-        self.location_list = [['shelf', 2.60, 1.50, 0.00252*pi], ['entrance', 5.66, -4.0, 0.004*pi]]
+        self.location_list = [['shelf', 2.29, -0.212, 0.00567*pi], ['entrance', 2.51, -6.61, 0.00563*pi], ['table', -0.5, -0.409, 0.000941*pi]]
         self.location_pose_x = 0
         self.location_pose_y = 0
         self.location_pose_w = 0
         self.destination = 'Null'
+        self.sub_tf_flg = False
 
     def getMemorizePlaceCB(self, receive_msg):
         self.location_name = receive_msg.data
@@ -38,18 +42,7 @@ class Navigation:
 
     def getTfCB(self, receive_msg):
         self.sub_tf = receive_msg
-
-    def setCostmapParam(self,receive_msg):
-        costmap_param = String()
-        costmap_param = receive_msg
-        if(costmap_param == 'True'):
-            rospy.get_param('/move_base')
-            rospy.set_param('/move_base/shutdown_costmaps', costmap_param)
-            rospy.loginfo("Costmap OFF")
-        else:
-            rospy.get_param('/move_base')
-            rospy.set_param('/move_base/shutdown_costmaps', costmap_param)
-            rospy.loginfo("Costmap ON")
+        self.sub_tf_flg = True
 
     def waitTopic(self):#------------------------------------------------------state 0
         while not rospy.is_shutdown():
@@ -92,6 +85,7 @@ class Navigation:
             result.data = False
             self.navigation_result_pub.publish(result)
             return 0
+        rospy.sleep(0.1)
         ac = actionlib.SimpleActionClient('move_base', MoveBaseAction)
         while not ac.wait_for_server(rospy.Duration(5.0)) and not rospy.is_shutdown():
             rospy.loginfo("Waiting for action client comes up...")
@@ -103,33 +97,29 @@ class Navigation:
         goal.target_pose.pose.position.y = self.location_list[location_num][2]
         q = tf.transformations.quaternion_from_euler(0, 0, self.location_list[location_num][3])
         goal.target_pose.pose.orientation = Quaternion(q[0], q[1], q[2], q[3])
+        rospy.loginfo(" Sended Goal")
+        rospy.sleep(0.1)
         ac.send_goal(goal)
-        rospy.loginfo("Sended Goal")
         while not rospy.is_shutdown():
             if ac.get_state() == 1:
                 rospy.loginfo("Got out of the obstacle")
-                #rospy.sleep(2.0)
-                #ac.send_goal(goal)
-                #rospy.loginfo("Sended goal onmore")
+                rospy.sleep(1.5)
             if ac.get_state() == 3:
                 rospy.loginfo("Goal")
                 self.destination = 'Null'
                 result = Bool()
                 result.data = True
+                rospy.sleep(0.1)
                 self.navigation_result_pub.publish(result)
                 rospy.loginfo("Published result")
-                #self.setCostmapParam('False')
                 return 0
             elif ac.get_state() == 4:
                 rospy.loginfo("Buried in obstacle")
+                self.clear_costmaps()
+                print 'clear'
                 rospy.sleep(1.0)
                 return 2
 
-    def clearCostmap(self):#---------------------------------------------------state 3
-        while not rospy.is_shutdown():
-            rospy.loginfo("*Clear Costmap*")
-            self.setCostmapParam('True')
-            return 2
 
 if __name__ == '__main__':
     rospy.init_node('sg_navigation', anonymous = True)
@@ -140,11 +130,10 @@ if __name__ == '__main__':
             if state == 0:
                 state = nav.waitTopic()
             elif state == 1:
+                rospy.sleep(1.0)
                 state = nav.setLocationList()
             elif state == 2:
                 state = nav.navigateToDestination()
-            elif state == 3:
-                state = nav.clearCostmap()
     except rospy.ROSInterruptException:
         rospy.loginfo(" Interrupted")
         pass
