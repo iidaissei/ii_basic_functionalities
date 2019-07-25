@@ -44,7 +44,6 @@ class NavigationClass():
         self.mimi = MimiControlClass()
         self.navigation_result_flg = Bool()
 
-
     def getNavigationResultCB(self, result_msg):
         self.navigation_result_flg = result_msg.data
 
@@ -71,12 +70,12 @@ class AvoidThat():
             print '-' *80
             rospy.loginfo(" Start the state0")
             self.mimi.motorControl(6, 0.3)#正面を向く
-            self.mimi.speak("Move to the front of the shelf")
-            rospy.loginfo(" Move to the shelf")
-            rospy.sleep(1.0)
-            self.nav.movePlace('shelf')
-            rospy.sleep(1.0)
-            self.mimi.speak(" I arrived the shelf")
+            #self.mimi.speak("Move to the front of the shelf")
+            #rospy.loginfo(" Move to the shelf")
+            #rospy.sleep(1.0)
+            #self.nav.movePlace('shelf')
+            #rospy.sleep(1.0)
+            #self.mimi.speak(" I arrived the shelf")
             rospy.loginfo(" Finished the state0")
             rospy.sleep(1.0)
             return 1

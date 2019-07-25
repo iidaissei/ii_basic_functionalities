@@ -19,16 +19,12 @@ class MimiControlClass():
     def __init__(self):
         #Publisher
         self.cmd_vel_pub = rospy.Publisher('/cmd_vel_mux/input/teleop', Twist, queue_size = 1)#kobukiの前進後進
-        self.m5_pub = rospy.Publisher('/m5_controller/command', Float64, queue_size = 1)
         self.m6_pub = rospy.Publisher('/m6_controller/command', Float64, queue_size = 1)
-        self.changing_pose_pub = rospy.Publisher('/arm/changing_pose_req', String, queue_size = 1)#manipulateしたあとの変形
-
         #Subscriber
         self.laser_sub = rospy.Subscriber('/scan', LaserScan, self.getLaserCB)
  
         self.min_laser_dist = 999.9
         self.front_laser_dist = 999.9
-        self.twist_cmd = Twist()
         
     def getLaserCB(self, laser_scan):
         self.laser_dist = laser_scan.ranges
@@ -36,36 +32,27 @@ class MimiControlClass():
         self.front_laser_dist = laser_scan.ranges[359]
         
     def linearControl(self, linear_num):
-        self.twist_cmd.linear.x = linear_num
-        self.cmd_vel_pub.publish(self.twist_cmd)
-        self.twist_cmd.linear.x = 0
+        twist_cmd = Twist()
+        twist_cmd.linear.x = linear_num
+        self.cmd_vel_pub.publish(twist_cmd)
+        twist_cmd.linear.x = 0
 
     def angularControl(self, angular_num):
-        self.twist_cmd.angular.z = angular_num
-        self.cmd_vel_pub.publish(self.twist_cmd)
-        self.twist_cmd.angular.z = 0
+        twist_cmd = Twist()
+        twist_cmd.angular.z = angular_num
+        self.cmd_vel_pub.publish(twist_cmd)
+        twist_cmd.angular.z = 0
 
     def motorControl(self, motor_name, value):
-        if motor_name == 5:
-            m5_angle = Float64()
-            m5_angle = value
-            self.sleep(0.1)
-            self.m5_pub.publish(m5_angle)
-        elif motor_name == 6:
+        if motor_name == 6:
             m6_angle = Float64()
             m6_angle = value
-            self.sleep(0.1)
+            rospy.sleep(0.1)
             self.m6_pub.publish(m6_angle)
 
     def speak(self, sentense):
         voice_cmd = '/usr/bin/picospeaker -r -15 -p 4 %s' %sentense
         subprocess.call(voice_cmd.strip().split(' '))
-
-    def armChangingPose(self, receive_msg):
-        pose_req = String()
-        pose_req.data = receive_msg
-        rospy.sleep(0.1)
-        self.changing_pose_pub.publish(pose_req)
 
     
 class NavigationClass():
@@ -84,28 +71,32 @@ class NavigationClass():
 
     def setPlace(self, receive_msg): 
         place_name = String()
-        place_name = receive_msg
+        place_name.data = receive_msg
         rospy.loginfo(" Memorizing...")
+        rospy.sleep(0.1)
         self.navigation_memorize_pub.publish(place_name)
         while self.navigation_result_flg == False and not rospy.is_shutdown():
             self.navigation_memorize_pub.publish(place_name)
             rospy.loginfo(" Waiting for result")
-            time.sleep(2.0)
+            rospy.sleep(2.5)
         self.navigation_result_flg = False
         rospy.loginfo(" Memorization complete!")
         self.mimi.speak("I remembered the location og the " + place_name)
+        rospy.sleep(0.5)
 
     def movePlace(self, receive_msg):
         place_name = String()
-        place_name = receive_msg
+        place_name.data = receive_msg
+        rospy.loginfo("IMove to the "+ str(place_name))
+        rospy.sleep(0.1)
         self.navigation_command_pub.publish(place_name)
         while self.navigation_result_flg == False and not rospy.is_shutdown():
             rospy.sleep(2.5)
             rospy.loginfo(" Moving...")
-            self.mimi.speak("Moving")
+            #self.mimi.speak("Moving")
+        rospy.sleep(0.5)
         self.navigation_result_flg = False
         rospy.loginfo(" Has arrived!")
-    
 
 class ObjectRecognizeClass():
     def __init__(self):
@@ -127,8 +118,9 @@ class ObjectRecognizeClass():
         self.object_num = result_msg.data
        
     def getObjectListCB(self, result_msg):
+        print result_msg.data
         self.object_list = result_msg.data.split(" ")
-        self.object_list[-1:] = []
+        #self.object_list[-1:] = []
         print self.object_list
         self.object_num = len(self.object_list)
         self.object_list_flg = True
@@ -155,11 +147,17 @@ class MoveObject():#---------------------------------------------------state0
         try:
             print '-' *80
             rospy.loginfo(" Start the state0")
-            self.mimi.motorControl(6, 0.2)
-            rospy.loginfo(" Recognizing Object")
+            rospy.sleep(0.5)
+            self.mimi.motorControl(6, 0.3)
+            rospy.sleep(0.5)
+            self.mimi.speak("Approach the object")
+            #rospy.loginfo(" Recognizing Object")
             #self.frontObject(1)#中央のオブジェクトの数を指定する
-            self.approachObjectA()
-            self.nav.setPlace('table')
+            #self.approachObjectA()
+            rospy.sleep(0.1)
+            self.nav.movePlace('table')
+            self.mimi.speak("I arrived table")
+            rospy.sleep(0.5)
             rospy.loginfo(" Finish the state0")
             return 1
         except rospy.ROSInterruptException:
@@ -184,16 +182,24 @@ class PickObject():#----------------------------------------------------state1
 
     def startObjectGrasp(self):
         list_req = Bool()
-        list_req = True
-        self.object_req.object_recog_flgobject_list_req_pub.publish(list_req)
-        self.object_name = self.object_list[0]
+        list_req.data = True
+        rospy.sleep(0.5)
+        self.object_req.object_list_req_pub.publish(list_req)
+        rospy.sleep(2.0)
+        print self.object_req.object_list
+        #while not rospy.is_shutdown() and self.object_req.object_list_flg == False:
+        #    self.mimi.angularControl(0.3)
+        #    rospy.sleep()
+        #self.mimi.angularControl(0)
+        self.object_name = self.object_req.object_list[0]
         rospy.sleep(3.0)
-        self.mimi.speak("I grasp the " + self.object_name)
+        self.mimi.speak("I grasp " + self.object_name)
         grasp_req = String()
         grasp_req.data = self.object_name
         self.object_grasp_req_pub.publish(grasp_req)
-        while self.object_grasp_result_flg == False and not rospy.is_shutdown():
-            rospy.sleep(0.5)
+        while not rospy.is_shutdown() and self.object_grasp_result_flg == False:
+            rospy.loginfo(" Waiting for grasping...")
+            rospy.sleep(2.5)
         self.object_grasp_result_flg = False
         self.object_req.object_list = []
 
@@ -201,11 +207,9 @@ class PickObject():#----------------------------------------------------state1
         try:
             print '-' *80
             rospy.loginfo(" Start the state1")
-            self.mimi.motorControl(6, 0.2)
-            rospy.sleep(0.5)
+            self.mimi.motorControl(6, -0.07)
+            rospy.sleep(1.0)
             self.startObjectGrasp()
-            rospy.sleep(0.5)
-            self.armChangingPose('carry')
             rospy.sleep(0.5)
             rospy.loginfo(" Finish the state1")
             return 2
@@ -217,37 +221,45 @@ class PickObject():#----------------------------------------------------state1
 class PlaceObject():#-------------------------------------------------------------------------------state2
     def __init__(self):
         #Publisher
-        self.objet_place_req_pub = rospy.Publisher('/object/place_req', Bool, queue_size=1)#objectを置く
+        self.object_place_req_pub = rospy.Publisher('/arm/changing_pose_req', String, queue_size=1)#objectを置く
         #Subscriber
-        self.object_place_res_sub = rospy.Subscriber('/object/place_res', Bool, self.getObjectPlaseCB)
+        rospy.Subscriber('/arm/changing_pose_res', Bool, self.getObjectPlaseCB)
         
-        self.object_plase_flg = False
+        self.object_place_flg = False
         self.nav = NavigationClass()
+        self.mimi = MimiControlClass()
 
     def getObjectPlaseCB(self, result_msg):
-        self.object_plase_flg = result_msg.data
+        self.object_place_flg = result_msg.data
+        print self.object_place_flg
 
     def statrObjectPlace(self):
-        place_req = Bool()
-        place_req.data = True
+        place_req = String()
+        place_req.data = 'place'
+        rospy.loginfo(" Place object")
         self.object_place_req_pub.publish(place_req)
-        print 'Object Placing'
-        while self.object_place_flg == False and not rospy.is_shutdown():
-           rospy.sleep(0.5)
-        rospy.sleep(3.0)
+        while not rospy.is_shutdown() and self.object_place_flg == False:
+            rospy.loginfo(" Waiting for placing...")
+            rospy.sleep(2.5)
         self.object_place_flg = False
 
     def master(self):
         try:
             print '-' *80
             rospy.loginfo(" Start the state2")
+            rospy.sleep(0.1)
+            self.mimi.motorControl(6, 0.3)
+            rospy.sleep(1.0)
             self.nav.movePlace('shelf')#競技開始前に場所を指定する
+            rospy.sleep(1.5)
             self.statrObjectPlace()
-            self.mimi.armChangingPose('carry')
-            self.nav.movePlace('table')
+            rospy.sleep(1.0)
+            rospy.sleep(1.0)
             rospy.loginfo(" Finish the state2")
+            rospy.loginfo(" Finished pick and place")
+            self.mimi.speak("Finished pick and place")
             return 4
-        except rosoy.ROSInterruptException:
+        except rospy.ROSInterruptException:
             rospy.loginfo(" Interrupted")
             pass
 
@@ -263,6 +275,7 @@ if __name__ == '__main__':
             if state == 0:
                 state = moveO.master()
             elif state == 1:
+                #rospy.sleep(2.0)
                 state = pickO.master()
             elif state == 2:
                 state = placeO.master()
