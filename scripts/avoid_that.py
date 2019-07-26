@@ -69,7 +69,11 @@ class AvoidThat():
         try:
             print '-' *80
             rospy.loginfo(" Start the state0")
+<<<<<<< HEAD
             self.mimi.motorControl(6, 0.3)#正面を向く
+=======
+            #self.mimi.motorControl(6, 0.3)#正面を向く
+>>>>>>> 945b22067adf5831e16a359dad9b101862d3277c
             #self.mimi.speak("Move to the front of the shelf")
             #rospy.loginfo(" Move to the shelf")
             #rospy.sleep(1.0)
@@ -87,14 +91,16 @@ class AvoidThat():
         try:
             print '-' *80
             rospy.loginfo(" Start the state1")
+            self.mimi.Control(6, 0.3)
+            rospy.sleep(1.0)
             self.mimi.speak("Move to the entrance")
             rospy.loginfo(" Move to the entrance")
-            rospy.sleep(1.0)
+            rospy.sleep(0.5)
             self.nav.movePlace('entrance')
             rospy.sleep(1.0)
             self.mimi.speak("I arrived the entrance")
             rospy.loginfo(" Finished the state1")
-            rospy.sleep(2.0)
+            rospy.sleep(1.0)
             self.mimi.speak("Finished Avoid That")
             return 2
         except rospy.ROSInterruptException:
@@ -105,7 +111,7 @@ class AvoidThat():
 if __name__ == '__main__':
     rospy.init_node("avoid_taht", anonymous = True)
     try:
-        state = 0
+        state = 1
         at = AvoidThat()
         while not rospy.is_shutdown() and not state == 2:
             if state == 0:

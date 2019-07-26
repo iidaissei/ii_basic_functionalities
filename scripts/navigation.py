@@ -3,10 +3,16 @@
 
 import rospy
 import tf 
+<<<<<<< HEAD
 from math import pi
 import actionlib
 from  std_srvs.srv import Empty
+=======
+>>>>>>> 945b22067adf5831e16a359dad9b101862d3277c
 import time
+import actionlib
+from math import pi
+from std_srvs.srv import Empty
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from std_msgs.msg import String, Bool
 from geometry_msgs.msg import Twist, Quaternion
@@ -62,7 +68,10 @@ class Navigation:
             self.location_pose_y = self.sub_tf.transforms[0].transform.translation.y
             self.location_pose_w = self.sub_tf.transforms[0].transform.rotation.z
             #self.location_pose_w += 1.5 * self.location_pose_w * self.location_pose_w *self.location_pose_w
+<<<<<<< HEAD
             print 'D'
+=======
+>>>>>>> 945b22067adf5831e16a359dad9b101862d3277c
             self.location_list.append([self.location_name, self.location_pose_x, self.location_pose_y, self.location_pose_w])
             rospy.loginfo("Add *" + self.location_name + "* to the LocationList")
             self.location_name = 'Null'
@@ -94,7 +103,10 @@ class Navigation:
         goal.target_pose.pose.position.x = self.location_list[location_num][1]
         goal.target_pose.pose.position.y = self.location_list[location_num][2]
         #self.location_list[location_num][3] += 1.5 * self.location_list[location_num][3] * self.location_list[location_num][3] *self.location_list[location_num][3]#setを使わない場合のみ有効
+<<<<<<< HEAD
         #q = tf.transformations.quaternion_from_euler(0, 0, 1.0) 
+=======
+>>>>>>> 945b22067adf5831e16a359dad9b101862d3277c
         q = tf.transformations.quaternion_from_euler(0, 0, self.location_list[location_num][3]) 
         goal.target_pose.pose.orientation = Quaternion(q[0], q[1], q[2], q[3])
         #goal.target_pose.pose.orientation = Quaternion(0, 0, 0, 1)
@@ -105,9 +117,13 @@ class Navigation:
             print num
             if num == 1:
                 rospy.loginfo("Got out of the obstacle")
+<<<<<<< HEAD
                 rospy.sleep(2.0)
                 #ac.send_goal(goal)
                 #rospy.loginfo("Sended goal onmore")
+=======
+                rospy.sleep(2.5)
+>>>>>>> 945b22067adf5831e16a359dad9b101862d3277c
             elif num == 3:
                 rospy.loginfo("Goal")
                 self.destination = 'Null'
