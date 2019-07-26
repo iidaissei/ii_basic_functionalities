@@ -6,20 +6,21 @@ import tf
 import math
 import actionlib
 import subprocess
-import time
-import math
 from std_srvs.srv import Empty
-from std_msgs.msg import String, Bool, Float64
-from sensor_msgs.msg import LaserScan
+import time
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
+from std_msgs.msg import String, Bool, Float64
 from geometry_msgs.msg import Twist, Quaternion, Point, PoseWithCovarianceStamped
 from tf2_msgs.msg import TFMessage
+from sensor_msgs.msg import LaserScan
+from math import pi
 from get_distance_pcl.msg import Coordinate_xyz
 
 
 class MimiControlClass():
     def __init__(self):
         #Publisher
+        self.m5_pub = rospy.Publisher('/m5_controller/command', Float64, queue_size = 1)
         self.m6_pub = rospy.Publisher('/m6_controller/command', Float64, queue_size = 1)
         self.cmd_vel_pub = rospy.Publisher('/cmd_vel_mux/input/teleop', Twist, queue_size = 1)
 
@@ -65,6 +66,7 @@ class MoveClosePerosn():
 
         self.start_flg = 'Null'
         self.person_flg = False
+        self.sub_tf_flg = False
         self.object_xy_flg = False
         self.human_detect_flg = False
         self.mimi = MimiControlClass()
@@ -96,18 +98,19 @@ class MoveClosePerosn():
     def findPerson(self):#----------------------------------------------------state1
         try:
             rospy.loginfo(" Start  the state1")
-            rospy.sleep(1.0)
+            rospy.sleep(0.1)
             self.mimi.motorControl(6, -0.1)
             self.person_flg = False
-            while not rospy.is_shutdown() and self.person_flg == False:
+            #while not rospy.is_shutdown() and self.person_flg == False:
+            while not rospy.is_shutdown() and self.object_xy_flg == False:
                 for i in range(24):
-                    if i <= 8 and self.person_flg == False:
+                    if i <= 8 and self.object_xy_flg  == False:
                         self.mimi.angularControl(0.61)
                         rospy.sleep(0.5)
-                    elif i >8 and self.person_flg == False:
+                    elif i >8 and self.object_xy_flg == False:
                         self.mimi.angularControl(-0.61)
                         rospy.sleep(0.5)
-                    if i == 24 and self.person_flg == False:
+                    if i == 24 and self.object_xy_flg == False:
                         rospy.loginfo(" Could not find person")
                         for j in range(8):
                             self.mimi.angularControl(0.61)
@@ -124,20 +127,21 @@ class MoveClosePerosn():
 
     def getHumanCoordinate(self):#----------------------------------------------state2
         try:
-            rospy.loginfo(" Start the state2")
             rospy.sleep(1.0)
+            rospy.loginfo(" Start the state2")
             data = Bool()
             data.data = True
-            rospy.sleep(0.1)
+            rospy.sleep(1.0)
             self.human_detect_pub.publish(data)
             while not rospy.is_shutdown() and self.object_xy_flg == False:
                 self.human_detect_pub.publish(data)
                 rospy.sleep(0.5)
+            rospy.sleep(1.0)
             print self.object_coordinate_x
             print self.object_coordinate_y
             rospy.sleep(0.1)
             self.mimi.motorControl(6, 0.3)
-            rospy.sleep(2.0)
+            rospy.sleep(3.0)
             rospy.loginfo(" Get human coordinate")
             rospy.loginfo(" Finished the state2")
             return 3
@@ -149,7 +153,7 @@ class MoveClosePerosn():
     def navigation(self):#---------------------------------------------------state3
         try:
             rospy.loginfo(" Start the state3")
-            rospy.sleep(1.0)
+            rospy.sleep(0.2)
             ac = actionlib.SimpleActionClient('move_base', MoveBaseAction)
             while not ac.wait_for_server(rospy.Duration(5.0)) and not rospy.is_shutdown():
                 rospy.loginfo(" Waiting for action client comes up...")
@@ -159,16 +163,17 @@ class MoveClosePerosn():
             goal.target_pose.header.stamp = rospy.Time.now()
             goal.target_pose.pose.position.x = self.object_coordinate_x
             goal.target_pose.pose.position.y = self.object_coordinate_y
-            q = tf.transformations.quaternion_from_euler(0, 0, 1)
+            q = tf.transformations.quaternion_from_euler(0, 0, 0.5)
             goal.target_pose.pose.orientation = Quaternion(q[0], q[1], q[2], q[3])
-            self.mimi.speak("Moving")
+            rospy.sleep(0.5)
+            self.mimi.speak("Move to the point of human")
             rospy.loginfo(" Send Goal")
-            rospy.sleep(1.0)
+            rospy.sleep(0.5)
             ac.send_goal(goal)
             while not rospy.is_shutdown():
                 if ac.get_state() == 1:
                     rospy.loginfo(" Got out of the obstacle")
-                    rospy.sleep(2.0)
+                    rospy.sleep(1.5)
                 elif ac.get_state() == 3:
                     rospy.loginfo(" Has arrived")
                     rospy.sleep(1.0)

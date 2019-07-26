@@ -3,31 +3,29 @@
 
 import rospy
 import tf 
-import math
-import actionlib
 import time
-from  std_srvs.srv import Empty
+import actionlib
+from math import pi
+from std_srvs.srv import Empty
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from std_msgs.msg import String, Bool
 from geometry_msgs.msg import Twist, Quaternion
 from tf2_msgs.msg import TFMessage
 from sensor_msgs.msg import LaserScan
 
-
 class Navigation:
     def __init__(self):
-        #Publisher
         rospy.Subscriber('/navigation/memorize_place', String, self.getMemorizePlaceCB)
         rospy.Subscriber('/navigation/move_place', String, self.getDestinationCB)
         self.sub_tf  = rospy.Subscriber('/tf', TFMessage, self.getTfCB)
-        #Subscriber
+        
         self.navigation_result_pub = rospy.Publisher('/navigation/result', Bool, queue_size = 1)
-        #Service
-        rospy.wait_for_service('/move_base/clear_costmaps')
+
+        rospy.wait_for_service('move_base/clear_costmaps')
         self.clear_costmaps = rospy.ServiceProxy('move_base/clear_costmaps', Empty)
 
         self.location_name = 'Null'
-        self.location_list = [['shelf', 2.29, -0.212, 0.00567*pi], ['entrance', 2.51, -6.61, 0.00563*pi], ['table', -0.5, -0.409, 0.000941*pi]]
+        self.location_list = [['shelf', 2.062, -0.217, 0.081], ['entrance', 2.54, -6.03, 1.55], ['table', 0.234, -0.649, -3.088]]#第四要素は向き
         self.location_pose_x = 0
         self.location_pose_y = 0
         self.location_pose_w = 0
@@ -56,12 +54,14 @@ class Navigation:
                 return 0
 
     def setLocationList(self):#------------------------------------------------state 1
-        pose = self.sub_tf
-        if pose.transforms[0].header.frame_id == 'odom':
-            self.location_pose_x = pose.transforms[0].transform.translation.x
-            self.location_pose_y = pose.transforms[0].transform.translation.y
-            self.location_pose_w = pose.transforms[0].transform.rotation.z
-            self.location_pose_w += 1.5 * self.location_pose_w * self.location_pose_w *self.location_pose_w
+        #pose = self.sub_tf
+        while not rospy.is_shutdown() and self.sub_tf_flg == False:
+            self.getTFCB()
+        if self.sub_tf.transforms[0].header.frame_id == 'odom':
+            self.location_pose_x = self.sub_tf.transforms[0].transform.translation.x
+            self.location_pose_y = self.sub_tf.transforms[0].transform.translation.y
+            self.location_pose_w = self.sub_tf.transforms[0].transform.rotation.z
+            #self.location_pose_w += 1.5 * self.location_pose_w * self.location_pose_w *self.location_pose_w
             self.location_list.append([self.location_name, self.location_pose_x, self.location_pose_y, self.location_pose_w])
             rospy.loginfo("Add *" + self.location_name + "* to the LocationList")
             self.location_name = 'Null'
@@ -85,7 +85,6 @@ class Navigation:
             result.data = False
             self.navigation_result_pub.publish(result)
             return 0
-        rospy.sleep(0.1)
         ac = actionlib.SimpleActionClient('move_base', MoveBaseAction)
         while not ac.wait_for_server(rospy.Duration(5.0)) and not rospy.is_shutdown():
             rospy.loginfo("Waiting for action client comes up...")
@@ -95,25 +94,31 @@ class Navigation:
         goal.target_pose.header.stamp = rospy.Time.now()
         goal.target_pose.pose.position.x = self.location_list[location_num][1]
         goal.target_pose.pose.position.y = self.location_list[location_num][2]
-        q = tf.transformations.quaternion_from_euler(0, 0, self.location_list[location_num][3])
+        #self.location_list[location_num][3] += 1.5 * self.location_list[location_num][3] * self.location_list[location_num][3] *self.location_list[location_num][3]#setを使わない場合のみ有効
+        q = tf.transformations.quaternion_from_euler(0, 0, self.location_list[location_num][3]) 
         goal.target_pose.pose.orientation = Quaternion(q[0], q[1], q[2], q[3])
-        rospy.loginfo(" Sended Goal")
-        rospy.sleep(0.1)
         ac.send_goal(goal)
+        rospy.loginfo("Sended Goal")
         while not rospy.is_shutdown():
-            if ac.get_state() == 1:
+            num = ac.get_state()
+            print num
+            if num == 1:
                 rospy.loginfo("Got out of the obstacle")
-                rospy.sleep(1.5)
-            if ac.get_state() == 3:
+                rospy.sleep(2.5)
+            elif num == 3:
                 rospy.loginfo("Goal")
                 self.destination = 'Null'
                 result = Bool()
                 result.data = True
-                rospy.sleep(0.1)
                 self.navigation_result_pub.publish(result)
                 rospy.loginfo("Published result")
+                num = 0
+                rospy.sleep(2.0)
+                result.data = False
+                rospy.sleep(0.1)
+                self.navigation_result_pub.publish(result)
                 return 0
-            elif ac.get_state() == 4:
+            elif num == 4:
                 rospy.loginfo("Buried in obstacle")
                 self.clear_costmaps()
                 print 'clear'
@@ -130,7 +135,6 @@ if __name__ == '__main__':
             if state == 0:
                 state = nav.waitTopic()
             elif state == 1:
-                rospy.sleep(1.0)
                 state = nav.setLocationList()
             elif state == 2:
                 state = nav.navigateToDestination()
