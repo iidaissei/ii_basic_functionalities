@@ -69,7 +69,6 @@ class NavigationClass():
     def getNavigationResultCB(self, result_msg):
         self.navigation_result_flg = result_msg.data
 
-<<<<<<< HEAD
     def setPlace(self, receive_msg): 
         place_name = String()
         place_name.data = receive_msg
@@ -89,19 +88,16 @@ class NavigationClass():
         place_name = String()
         place_name.data = receive_msg
         rospy.loginfo("IMove to the "+ str(place_name))
-=======
     def movePlace(self, receive_msg):
         place_name = String()
         place_name.data = receive_msg
         print place_name
         print self.navigation_result_flg
->>>>>>> 945b22067adf5831e16a359dad9b101862d3277c
         rospy.sleep(0.1)
         self.navigation_command_pub.publish(place_name)
         while self.navigation_result_flg == False and not rospy.is_shutdown():
             rospy.sleep(2.5)
             rospy.loginfo(" Moving...")
-            #self.mimi.speak("Moving")
         rospy.sleep(0.5)
         self.navigation_result_flg = False
         rospy.loginfo(" Has arrived!")
@@ -177,16 +173,13 @@ class MoveObject():#---------------------------------------------------state0
             rospy.sleep(0.5)
             self.mimi.motorControl(6, 0.3)
             rospy.sleep(0.5)
-<<<<<<< HEAD
             self.mimi.speak("Approach the object")
             #rospy.loginfo(" Recognizing Object")
             #self.frontObject(1)#中央のオブジェクトの数を指定する
             #self.approachObjectA()
-=======
             #self.doorOpenStart()
             #rospy.sleep(0.5)
             self.mimi.speak("Approach the object")
->>>>>>> 945b22067adf5831e16a359dad9b101862d3277c
             rospy.sleep(0.1)
             self.nav.movePlace('table')
             self.mimi.speak("I arrived table")
@@ -256,11 +249,8 @@ class PlaceObject():#-----------------------------------------------------------
         #Publisher
         self.object_place_req_pub = rospy.Publisher('/arm/changing_pose_req', String, queue_size=1)#objectを置く
         #Subscriber
-<<<<<<< HEAD
         rospy.Subscriber('/arm/changing_pose_res', Bool, self.getObjectPlaseCB)
-=======
         self.object_place_res_sub = rospy.Subscriber('/arm/changing_pose_res', Bool, self.getObjectPlaseCB)
->>>>>>> 945b22067adf5831e16a359dad9b101862d3277c
         
         self.object_place_flg = False
         self.nav = NavigationClass()
@@ -273,20 +263,17 @@ class PlaceObject():#-----------------------------------------------------------
     def statrObjectPlace(self):
         place_req = String()
         place_req.data = 'place'
-<<<<<<< HEAD
         rospy.loginfo(" Place object")
         self.object_place_req_pub.publish(place_req)
         while not rospy.is_shutdown() and self.object_place_flg == False:
             rospy.loginfo(" Waiting for placing...")
             rospy.sleep(2.5)
-=======
         self.object_place_req_pub.publish(place_req)
         print 'Object Placing'
         while not rospy.is_shutdown() and self.object_place_flg == False:
             rospy.loginfo(" Waiting for placing...")
             rospy.sleep(2.5)
         rospy.sleep(0.5)
->>>>>>> 945b22067adf5831e16a359dad9b101862d3277c
         self.object_place_flg = False
 
     def master(self):
@@ -299,11 +286,6 @@ class PlaceObject():#-----------------------------------------------------------
             self.nav.movePlace('shelf')#競技開始前に場所を指定する
             rospy.sleep(1.5)
             self.statrObjectPlace()
-            rospy.sleep(1.0)
-<<<<<<< HEAD
-=======
-            #self.nav.movePlace('table')
->>>>>>> 945b22067adf5831e16a359dad9b101862d3277c
             rospy.sleep(1.0)
             rospy.loginfo(" Finish the state2")
             rospy.loginfo(" Finished pick and place")
@@ -325,7 +307,6 @@ if __name__ == '__main__':
             if state == 0:
                 state = moveO.master()
             elif state == 1:
-                #rospy.sleep(2.0)
                 state = pickO.master()
             elif state == 2:
                 state = placeO.master()
