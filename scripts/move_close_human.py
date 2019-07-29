@@ -45,7 +45,7 @@ class MimiControlClass():
         twist_cmd.angular.z = 0
 
     def speak(self, sentense):
-        voice_cmd = '/usr/bin/picospeaker -r -18 -p 4 %s' %sentense
+        voice_cmd = '/usr/bin/picospeaker -r -25 -p 5 %s' %sentense
         subprocess.call(voice_cmd.strip().split(' '))
 
 

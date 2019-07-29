@@ -3,12 +3,9 @@
 
 import rospy
 import tf 
-<<<<<<< HEAD
 from math import pi
 import actionlib
 from  std_srvs.srv import Empty
-=======
->>>>>>> 945b22067adf5831e16a359dad9b101862d3277c
 import time
 import actionlib
 from math import pi
@@ -31,7 +28,7 @@ class Navigation:
         self.clear_costmaps = rospy.ServiceProxy('move_base/clear_costmaps', Empty)
 
         self.location_name = 'Null'
-        self.location_list = [['shelf', 2.062, -0.217, 0.081], ['entrance', 2.54, -6.03, 1.55], ['table', 0.234, -0.649, -3.088]]#第四要素は向き
+        self.location_list = [['shelf', 2.062, -0.217, 0.015], ['entrance', 2.52, -6, 1.55], ['table', -0.35, -0.532, -3.088]]#第四要素は向き
         self.location_pose_x = 0
         self.location_pose_y = 0
         self.location_pose_w = 0
@@ -68,10 +65,6 @@ class Navigation:
             self.location_pose_y = self.sub_tf.transforms[0].transform.translation.y
             self.location_pose_w = self.sub_tf.transforms[0].transform.rotation.z
             #self.location_pose_w += 1.5 * self.location_pose_w * self.location_pose_w *self.location_pose_w
-<<<<<<< HEAD
-            print 'D'
-=======
->>>>>>> 945b22067adf5831e16a359dad9b101862d3277c
             self.location_list.append([self.location_name, self.location_pose_x, self.location_pose_y, self.location_pose_w])
             rospy.loginfo("Add *" + self.location_name + "* to the LocationList")
             self.location_name = 'Null'
@@ -102,14 +95,8 @@ class Navigation:
         goal.target_pose.header.stamp = rospy.Time.now()
         goal.target_pose.pose.position.x = self.location_list[location_num][1]
         goal.target_pose.pose.position.y = self.location_list[location_num][2]
-        #self.location_list[location_num][3] += 1.5 * self.location_list[location_num][3] * self.location_list[location_num][3] *self.location_list[location_num][3]#setを使わない場合のみ有効
-<<<<<<< HEAD
-        #q = tf.transformations.quaternion_from_euler(0, 0, 1.0) 
-=======
->>>>>>> 945b22067adf5831e16a359dad9b101862d3277c
         q = tf.transformations.quaternion_from_euler(0, 0, self.location_list[location_num][3]) 
         goal.target_pose.pose.orientation = Quaternion(q[0], q[1], q[2], q[3])
-        #goal.target_pose.pose.orientation = Quaternion(0, 0, 0, 1)
         ac.send_goal(goal)
         rospy.loginfo("Sended Goal")
         while not rospy.is_shutdown():
@@ -117,13 +104,7 @@ class Navigation:
             print num
             if num == 1:
                 rospy.loginfo("Got out of the obstacle")
-<<<<<<< HEAD
                 rospy.sleep(2.0)
-                #ac.send_goal(goal)
-                #rospy.loginfo("Sended goal onmore")
-=======
-                rospy.sleep(2.5)
->>>>>>> 945b22067adf5831e16a359dad9b101862d3277c
             elif num == 3:
                 rospy.loginfo("Goal")
                 self.destination = 'Null'
@@ -140,7 +121,7 @@ class Navigation:
             elif num == 4:
                 rospy.loginfo("Buried in obstacle")
                 self.clear_costmaps()
-                print 'clear'
+                rospy.loginfo(" Clear Costmaps")
                 rospy.sleep(1.0)
                 return 2
 

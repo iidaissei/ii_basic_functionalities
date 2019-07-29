@@ -27,10 +27,9 @@ class MimiControlClass():
             rospy.sleep(0.1)
             self.m6_pub.publish(m6_angle)
             rospy.loginfo(" Changing m6 pose")
-        rospy.sleep(1.0)
 
     def speak(self, sentense):
-        voice_cmd = '/usr/bin/picospeaker -r -15 -p 4 %s' %sentense
+        voice_cmd = '/usr/bin/picospeaker -r -25 -p 5 %s' %sentense
         subprocess.call(voice_cmd.strip().split(' '))
 
 
@@ -48,16 +47,22 @@ class NavigationClass():
         self.navigation_result_flg = result_msg.data
 
     def movePlace(self, receive_msg):
-        self.navigation_result_flg = False
         place_name = String()
-        place_name = receive_msg
+        place_name.data = receive_msg
+        print place_name
+        rospy.loginfo(" Move to " + str(place_name.data))
+        self.mimi.speak("I move to " + str(place_name.data))
+        rospy.sleep(0.1)
         self.navigation_command_pub.publish(place_name)
         while self.navigation_result_flg == False and not rospy.is_shutdown():
             rospy.sleep(2.5)
-            rospy.loginfo(" Mooving...")
+            rospy.loginfo(" Moving...")
+        rospy.sleep(0.5)
         self.navigation_result_flg = False
-        rospy.loginfo(" Has arrived!")
-    
+        rospy.loginfo(" Arrived " + str(place_name.data))
+        self.mimi.speak("I arrived " + str(place_name.data))
+        rospy.sleep(1.0)
+
 
 class AvoidThat():
     def __init__(self):
@@ -69,8 +74,6 @@ class AvoidThat():
             print '-' *80
             rospy.loginfo(" Start the state0")
             self.mimi.motorControl(6, 0.3)#正面を向く
-            #self.mimi.speak("Move to the front of the shelf")
-            #rospy.loginfo(" Move to the shelf")
             #rospy.sleep(1.0)
             #self.nav.movePlace('shelf')
             #rospy.sleep(1.0)
@@ -87,15 +90,12 @@ class AvoidThat():
             rospy.loginfo(" Start the state1")
             self.mimi.speak("Start Avoid That")
             rospy.sleep(1.0)
-            self.mimi.speak("Move to the entrance")
-            rospy.loginfo(" Move to the entrance")
-            rospy.sleep(0.5)
             self.nav.movePlace('entrance')
             rospy.sleep(1.0)
-            self.mimi.speak("I arrived the entrance")
             rospy.loginfo(" Finished the state1")
             rospy.sleep(1.0)
             self.mimi.speak("Finished Avoid That")
+            rospy.loginfo(" Finished Avoid That")
             return 2
         except rospy.ROSInterruptException:
             rospy.loginfo(" Interrupted")
@@ -105,14 +105,13 @@ class AvoidThat():
 if __name__ == '__main__':
     rospy.init_node("avoid_taht", anonymous = True)
     try:
-        state = 1
+        state = 0
         at = AvoidThat()
         while not rospy.is_shutdown() and not state == 2:
             if state == 0:
                 state = at.moveStartPosition()
             if state == 1:
                 state = at.moveDestination()
-        rospy.loginfo(" Finished Avoid_That")
     except rospy.ROSInterruptException:
         rospy.loginfo(" Interrupted")
         pass
