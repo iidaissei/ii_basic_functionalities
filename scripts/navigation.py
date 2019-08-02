@@ -100,6 +100,8 @@ class Navigation:
         q = tf.transformations.quaternion_from_euler(0, 0, self.location_list[location_num][3]) 
         goal.target_pose.pose.orientation = Quaternion(q[0], q[1], q[2], q[3])
         #goal.target_pose.pose.orientation = Quaternion(0, 0, 0, 1)
+        self.clear_costmaps()
+        rospy.sleep(0.5)
         ac.send_goal(goal)
         rospy.loginfo("Sended Goal")
         while not rospy.is_shutdown():

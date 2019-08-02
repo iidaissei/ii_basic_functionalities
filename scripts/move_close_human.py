@@ -54,15 +54,14 @@ class MoveClosePerosn():
         #Publisher
         self.move_close_person_pub = rospy.Publisher('/move_close_person/stop', String, queue_size = 1)
         self.human_detect_pub = rospy.Publisher('/move_close_human/human_detect_flag', Bool , queue_size = 1)
- 
         #Subscriber
         rospy.Subscriber('/move_close_person/start', String, self.getStartFlgCB)
         rospy.Subscriber('/recog_obj', String, self.recogPerson)
         self.human_dist_sub = rospy.Subscriber('get_distance_pcl/Coordinate_xyz', Coordinate_xyz, self.getObject_xy)
+        rospy.Subscriber('/tf', TFMessage, self.getTfCB)
         #Service
         rospy.wait_for_service('move_base/clear_costmaps')
         self.clear_costmaps = rospy.ServiceProxy('move_base/clear_costmaps', Empty)
-
 
         self.start_flg = 'Null'
         self.person_flg = False
@@ -88,6 +87,12 @@ class MoveClosePerosn():
         self.object_coordinate_z = receive_msg.world_z
         self.object_xy_flg = True
 
+    def getTfCB(self, receive_msg):#向きのみを購読
+        if receive_msg.transforms[0].header.frame_id == 'map':
+            self.tf_pose_w = receive_msg.transforms[0].transform.rotation.w
+        self.sub_tf_flg = True
+        #print self.tf_pose_w
+
     def waitTopic(self):#-----------------------------------------------------state0
         while not rospy.is_shutdown():
             if self.start_flg == 'start':
@@ -101,18 +106,18 @@ class MoveClosePerosn():
             rospy.sleep(0.1)
             self.mimi.motorControl(6, -0.1)
             self.person_flg = False
-            #while not rospy.is_shutdown() and self.person_flg == False:
-            while not rospy.is_shutdown() and self.object_xy_flg == False:
+            while not rospy.is_shutdown() and self.person_flg == False:
+            #while not rospy.is_shutdown() and self.object_xy_flg == False:
                 for i in range(24):
-                    if i <= 8 and self.object_xy_flg  == False:
+                    if i <= 8 and self.person_flg  == False:
                         self.mimi.angularControl(0.61)
                         rospy.sleep(0.5)
-                    elif i >8 and self.object_xy_flg == False:
+                    elif i >8 and self.person_flg == False:
                         self.mimi.angularControl(-0.61)
                         rospy.sleep(0.5)
-                    if i == 24 and self.object_xy_flg == False:
+                    if i == 24 and self.person_flg == False:
                         rospy.loginfo(" Could not find person")
-                        for j in range(8):
+                        for j in range(24):
                             self.mimi.angularControl(0.61)
                         break
                 break
@@ -158,16 +163,22 @@ class MoveClosePerosn():
             while not ac.wait_for_server(rospy.Duration(5.0)) and not rospy.is_shutdown():
                 rospy.loginfo(" Waiting for action client comes up...")
             rospy.loginfo(" The server comes up")
+            rospy.sleep(0.5)
+            while not rospy.is_shutdown() and self.sub_tf_flg == False:
+                rospy.sleep(1.0)
+            print self.tf_pose_w
             goal = MoveBaseGoal()
             goal.target_pose.header.frame_id = 'map'
             goal.target_pose.header.stamp = rospy.Time.now()
             goal.target_pose.pose.position.x = self.object_coordinate_x
             goal.target_pose.pose.position.y = self.object_coordinate_y
-            q = tf.transformations.quaternion_from_euler(0, 0, 0.5)
+            #goal.target_pose.pose.position.z = self.object_coordinate_z
+            q = tf.transformations.quaternion_from_euler(0, 0, self.tf_pose_w)
             goal.target_pose.pose.orientation = Quaternion(q[0], q[1], q[2], q[3])
             rospy.sleep(0.5)
             self.mimi.speak("Move to the point of human")
             rospy.loginfo(" Send Goal")
+            self.clear_costmaps()
             rospy.sleep(0.5)
             ac.send_goal(goal)
             while not rospy.is_shutdown():
