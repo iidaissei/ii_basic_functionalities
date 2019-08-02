@@ -95,13 +95,14 @@ class Navigation:
         goal.target_pose.header.stamp = rospy.Time.now()
         goal.target_pose.pose.position.x = self.location_list[location_num][1]
         goal.target_pose.pose.position.y = self.location_list[location_num][2]
-        #self.location_list[location_num][3] += 1.5 * self.location_list[location_num][3] * self.location_list[location_num][3] *self.location_list[location_num][3]#setを使わない場合のみ有効
-        #q = tf.transformations.quaternion_from_euler(0, 0, 1.0) 
         q = tf.transformations.quaternion_from_euler(0, 0, self.location_list[location_num][3]) 
         goal.target_pose.pose.orientation = Quaternion(q[0], q[1], q[2], q[3])
+<<<<<<< HEAD
         #goal.target_pose.pose.orientation = Quaternion(0, 0, 0, 1)
         self.clear_costmaps()
         rospy.sleep(0.5)
+=======
+>>>>>>> 84aa79acfd9ab14946de754c30624aee23e2bdba
         ac.send_goal(goal)
         rospy.loginfo("Sended Goal")
         while not rospy.is_shutdown():
@@ -110,9 +111,6 @@ class Navigation:
             if num == 1:
                 rospy.loginfo("Got out of the obstacle")
                 rospy.sleep(2.0)
-                #ac.send_goal(goal)
-                #rospy.loginfo("Sended goal onmore")
-                rospy.sleep(2.5)
             elif num == 3:
                 rospy.loginfo("Goal")
                 self.destination = 'Null'
@@ -129,7 +127,7 @@ class Navigation:
             elif num == 4:
                 rospy.loginfo("Buried in obstacle")
                 self.clear_costmaps()
-                print 'clear'
+                rospy.loginfo(" Clear Costmaps")
                 rospy.sleep(1.0)
                 return 2
 

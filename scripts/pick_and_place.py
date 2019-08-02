@@ -69,25 +69,10 @@ class NavigationClass():
     def getNavigationResultCB(self, result_msg):
         self.navigation_result_flg = result_msg.data
 
-    def setPlace(self, receive_msg): 
-        place_name = String()
-        place_name.data = receive_msg
-        rospy.loginfo(" Memorizing...")
-        rospy.sleep(0.1)
-        self.navigation_memorize_pub.publish(place_name)
-        while self.navigation_result_flg == False and not rospy.is_shutdown():
-            self.navigation_memorize_pub.publish(place_name)
-            rospy.loginfo(" Waiting for result")
-            rospy.sleep(2.5)
-        self.navigation_result_flg = False
-        rospy.loginfo(" Memorization complete!")
-        self.mimi.speak("I remembered the location og the " + place_name)
-        rospy.sleep(0.5)
-
     def movePlace(self, receive_msg):
         place_name = String()
         place_name.data = receive_msg
-        #print place_name
+        print place_name
         rospy.loginfo(" Move to " + str(place_name.data))
         self.mimi.speak("I move to " + str(place_name.data))
         rospy.sleep(0.1)
@@ -95,7 +80,7 @@ class NavigationClass():
         while self.navigation_result_flg == False and not rospy.is_shutdown():
             rospy.sleep(2.5)
             rospy.loginfo(" Moving...")
-        rospy.sleep(0.1)
+        rospy.sleep(0.5)
         self.navigation_result_flg = False
         rospy.loginfo(" Arrived " + str(place_name.data))
         self.mimi.speak("I arrived " + str(place_name.data))
@@ -149,7 +134,6 @@ class MoveObject():#---------------------------------------------------state0
     def doorOpenStart(self):
         try:
             while not rospy.is_shutdown() and self.mimi.front_laser_dist == 999.9:
-                #self.mimi.getLaserCB()
                 rospy.sleep(1.0)
             initial_distance = self.mimi.front_laser_dist
             print initial_distance
@@ -176,9 +160,10 @@ class MoveObject():#---------------------------------------------------state0
             rospy.sleep(0.5)
             self.mimi.motorControl(6, 0.3)
             rospy.sleep(0.5)
+            self.mimi.speak("Approach the object")
+            rospy.sleep(0.5)
             #self.doorOpenStart()
-            #rospy.sleep(0.5)
-            rospy.sleep(0.1)
+            rospy.sleep(0.5)
             self.nav.movePlace('table')
             rospy.sleep(0.5)
             rospy.loginfo(" Finish the state0")
@@ -280,6 +265,11 @@ class PlaceObject():#-----------------------------------------------------------
         while not rospy.is_shutdown() and self.object_place_flg == False:
             rospy.loginfo(" Waiting for placing...")
             rospy.sleep(2.5)
+        self.object_place_req_pub.publish(place_req)
+        print 'Object Placing'
+        while not rospy.is_shutdown() and self.object_place_flg == False:
+            rospy.loginfo(" Waiting for placing...")
+            rospy.sleep(2.5)
         rospy.sleep(0.5)
         self.object_place_flg = False
 
@@ -314,7 +304,6 @@ if __name__ == '__main__':
             if state == 0:
                 state = moveO.master()
             elif state == 1:
-                #rospy.sleep(2.0)
                 state = pickO.master()
             elif state == 2:
                 state = placeO.master()

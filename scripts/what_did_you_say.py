@@ -50,7 +50,7 @@ class MimiControlClass():
             self.m6_pub.publish(m6_angle)
 
     def speak(self, sentense):
-        voice_cmd = '/usr/bin/picospeaker -r -18 -p 4 %s' %sentense
+        voice_cmd = '/usr/bin/picospeaker -r -25 -p 5 %s' %sentense
         subprocess.call(voice_cmd.strip().split(' '))
 
     
@@ -68,30 +68,23 @@ class NavigationClass():
     def getNavigationResultCB(self, result_msg):
         self.navigation_result_flg = result_msg.data
 
-    def setPlace(self, receive_msg): 
-        place_name = String()
-        place_name = receive_msg
-        rospy.loginfo(" Memorizing...")
-        self.navigation_memorize_pub.publish(place_name)
-        rospy.loginfo(" Publeshed topic")
-        while self.navigation_result_flg == False and not rospy.is_shutdown():
-            self.navigation_memorize_pub.publish(place_name)
-            rospy.loginfo(" Waiting for result")
-            time.sleep(2.0)
-        self.navigation_result_flg = False
-        rospy.loginfo(" Memorization complete!")
-        self.mimi.speak("I remembered the location og the " + place_name)
-
     def movePlace(self, receive_msg):
         place_name = String()
-        place_name = receive_msg
+        place_name.data = receive_msg
+        print place_name
+        rospy.loginfo(" Move to " + str(place_name.data))
+        self.mimi.speak("I move to " + str(place_name.data))
+        rospy.sleep(0.1)
         self.navigation_command_pub.publish(place_name)
-        rospy.loginfo(" Moving...")
         while self.navigation_result_flg == False and not rospy.is_shutdown():
-            rospy.sleep(3.0)
+            rospy.sleep(2.5)
+            rospy.loginfo(" Moving...")
+        rospy.sleep(0.5)
         self.navigation_result_flg = False
-        rospy.loginfo(" Has arrived!") 
-        
+        rospy.loginfo(" Arrived " + str(place_name.data))
+        self.mimi.speak("I arrived " + str(place_name.data))
+        rospy.sleep(1.0)
+
 
 class WhatDidYouSay():
     def __init__(self):
