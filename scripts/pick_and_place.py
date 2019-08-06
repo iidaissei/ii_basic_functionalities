@@ -131,14 +131,6 @@ class MoveObject():#---------------------------------------------------state0
         self.nav = NavigationClass()
         self.mimi = MimiControlClass()
 
-    def approachObjectA(self):#手動で調整する場合
-        for i in range(4):
-            self.mimi.linearControl(-0.1)
-            rospy.sleep(0.5)
-        for i in range(5):
-            self.mimi.angularControl(-0.61)
-            rospy.sleep(0.5)
-
     def doorOpenStart(self):
         try:
             while not rospy.is_shutdown() and self.mimi.front_laser_dist == 999.9:
@@ -170,7 +162,7 @@ class MoveObject():#---------------------------------------------------state0
             rospy.sleep(1.0)
             #self.doorOpenStart()
             rospy.sleep(0.5)
-            self.nav.movePlace('table')
+            self.nav.movePlace('table')#objectの置き場所を送る
             rospy.sleep(0.5)
             rospy.loginfo(" Finish the state0")
             return 1

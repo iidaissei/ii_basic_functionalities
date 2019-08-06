@@ -77,9 +77,10 @@ class NavigationClass():
         self.navigation_result_flg = result_msg.data
 
     def movePlace(self, receive_msg):
+        self.mimi.motorControl(6, 0.3)
+        rospy.sleep(1.5)
         place_name = String()
         place_name.data = receive_msg
-        print place_name
         rospy.loginfo(" Move to " + str(place_name.data))
         self.mimi.ttsSpeak("I move to " + str(place_name.data))
         rospy.sleep(0.1)
@@ -122,6 +123,7 @@ class WhatDidYouSay():
             result = Bool()
             result.data = False
             while not rospy.is_shutdown() and not question_number == 5:
+                rospy.sleep(1.0)
                 rospy.loginfo(" Question Number: " + str(question_number))
                 self.mimi.ttsSpeak("Please give me a question")
                 rospy.sleep(0.1)
@@ -135,7 +137,7 @@ class WhatDidYouSay():
                 rospy.loginfo(" Subscribed 'conversation/stop' Topic")
                 self.mimi.ttsSpeak("I finished answering")
                 question_number += 1
-            self.mimi.ttsSpeak("I answerd four questions")
+            self.mimi.ttsSpeak("I answered all questions")
             rospy.loginfo(" Finish conversation")
         except rospy.ROSInterruptException:
             rospy.loginfo(" Interrupted")
@@ -145,20 +147,11 @@ class WhatDidYouSay():
         try:
             print '-' *80
             rospy.loginfo(" Start the state0")
-            rospy.sleep(0.5)
+            rospy.sleep(1.0)
+            self.mimi.ttsSpeak("Start What Did You Say")
+            rospy.sleep(1.0)
             #self.nav.movePlace('entrance')#スタート地点に移動
-            rospy.sleep(0.2)
-            distance_to_door = self.mimi.front_laser_dist
-            print distance_to_door
-            self.mimi.ttsSpeak("Please open the door")
-            while not rospy.is_shutdown() and self.mimi.front_laser_dist <= distance_to_door + 0.88:#試走場のドアの幅を参考
-                rospy.loginfo(" Waiting for door open")
-                rospy.sleep(2.0)
-            rospy.sleep(2.0)
-            self.mimi.ttsSpeak("Thank you")
-            while not rospy.is_shutdown() and not self.mimi.front_laser_dist < 2.0:
-                self.mimi.linearControl(0.25)
-            rospy.sleep(3.0)
+            rospy.sleep(1.0)
             rospy.loginfo(" Finished the state0")
             return 1
         except rospy.ROSInterruptException:
@@ -170,17 +163,18 @@ class WhatDidYouSay():
             print '-' *80
             rospy.sleep(1.5)
             rospy.loginfo(" Start the state1")
-            #self.mimi.motorControl(6, 0.2)#顔の角度を指定
             data = String()
             data.data = 'start'
             self.move_close_person_pub.publish(data)
             while not rospy.is_shutdown() and not self.move_close_person_flg == 'stop':
-                rospy.loginfo(" Waiting for topic")
-                rospy.sleep(3.0)
+                #rospy.loginfo(" Waiting for topic")
+                rospy.sleep(0.1)
             self.move_close_person_flg = 'Null'
-            rospy.sleep(0.5)
-            self.mimi.ttsSpeak("Hello. I'm mimi")
+            rospy.sleep(2.0)
+            self.mimi.ttsSpeak("My name is mimi")
             rospy.sleep(1.0)
+            self.mimi.ttsSpeak("Nice to meet you")
+            rospy.sleep(2.0)
             rospy.loginfo(" Finished the state1")
             return 2
         except rospy.ROSInterruptException:
@@ -192,7 +186,6 @@ class WhatDidYouSay():
             print '-' *80
             rospy.loginfo(" Start the state2")
             self.mimi.ttsSpeak("Let's start conversation")
-            rospy.sleep(0.5)
             self.conversationMethod()
             rospy.sleep(1.0)
             rospy.loginfo(" Finished the state2")
@@ -205,11 +198,12 @@ class WhatDidYouSay():
         try:
             print '-' *80
             rospy.loginfo(" Start the state3")
-            rospy.sleep(0.5)
-            self.nav.movePlace('entrance')
             rospy.sleep(1.0)
+            self.nav.movePlace('entrance')#大会時変更
+            rospy.sleep(2.0)
             rospy.loginfo(" Finished the state3")
-            self.mimi.ttsSpeak("Finished what did you say")
+            rospy.loginfo(" Finished What Did You Say")
+            self.mimi.ttsSpeak("Finished What Did You Say")
             return 4
         except rospy.ROSInterruptException:
             rospy.loginfo(" Interrupted")
@@ -219,7 +213,7 @@ class WhatDidYouSay():
 if __name__ == '__main__':
     rospy.init_node("what_did_you_say", anonymous = True)
     try:
-        state = 2
+        state = 0
         wds = WhatDidYouSay()
         while not rospy.is_shutdown() and not state == 4:
             if state == 0:

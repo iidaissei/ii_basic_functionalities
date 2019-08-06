@@ -56,12 +56,14 @@ class NavigationClass():
         self.navigation_result_flg = result_msg.data
 
     def movePlace(self, receive_msg):
+        self.mimi.motorControl(6, 0.3)
         place_name = String()
         place_name.data = receive_msg
         print place_name
         rospy.loginfo(" Move to " + str(place_name.data))
         self.mimi.ttsSpeak("I move to " + str(place_name.data))
         rospy.sleep(0.1)
+        self.navigation_result_flg = False
         self.navigation_command_pub.publish(place_name)
         while self.navigation_result_flg == False and not rospy.is_shutdown():
             rospy.sleep(2.5)
@@ -82,10 +84,11 @@ class AvoidThat():
         try:
             print '-' *80
             rospy.loginfo(" Start the state0")
-            self.mimi.motorControl(6, 0.3)#正面を向く
-            #rospy.sleep(1.0)
+            rospy.sleep(1.0)
+            self.mimi.ttsSpeak("Start Avoid That")
+            rospy.sleep(1.0)
             #self.nav.movePlace('shelf')
-            #rospy.sleep(1.0)
+            rospy.sleep(1.0)
             rospy.loginfo(" Finished the state0")
             rospy.sleep(1.0)
             return 1
@@ -97,7 +100,6 @@ class AvoidThat():
         try:
             print '-' *80
             rospy.loginfo(" Start the state1")
-            self.mimi.ttsSpeak("Start Avoid That")
             rospy.sleep(1.0)
             self.nav.movePlace('entrance')
             rospy.sleep(1.0)
