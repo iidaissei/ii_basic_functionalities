@@ -19,6 +19,8 @@ class MimiControlClass():
     def __init__(self):
         #Publisher
         self.m6_pub = rospy.Publisher('/m6_controller/command', Float64, queue_size = 1)
+        self.tts_pub = rospy.Publisher('/tts', String, queue_size = 1)
+ 
 
     def motorControl(self, motor_name, value):
         if motor_name == 6:
@@ -31,6 +33,13 @@ class MimiControlClass():
     def speak(self, sentense):
         voice_cmd = '/usr/bin/picospeaker -r -25 -p 5 %s' %sentense
         subprocess.call(voice_cmd.strip().split(' '))
+
+    def ttsSpeak(self, sentense):
+        data = String()
+        data.data = sentense
+        rospy.sleep(0.1)
+        self.tts_pub.publish(data)
+        rospy.sleep(0.5)
 
 
 class NavigationClass():
@@ -51,7 +60,7 @@ class NavigationClass():
         place_name.data = receive_msg
         print place_name
         rospy.loginfo(" Move to " + str(place_name.data))
-        self.mimi.speak("I move to " + str(place_name.data))
+        self.mimi.ttsSpeak("I move to " + str(place_name.data))
         rospy.sleep(0.1)
         self.navigation_command_pub.publish(place_name)
         while self.navigation_result_flg == False and not rospy.is_shutdown():
@@ -60,7 +69,7 @@ class NavigationClass():
         rospy.sleep(0.5)
         self.navigation_result_flg = False
         rospy.loginfo(" Arrived " + str(place_name.data))
-        self.mimi.speak("I arrived " + str(place_name.data))
+        self.mimi.ttsSpeak("I arrived " + str(place_name.data))
         rospy.sleep(1.0)
 
 
@@ -88,13 +97,13 @@ class AvoidThat():
         try:
             print '-' *80
             rospy.loginfo(" Start the state1")
-            self.mimi.speak("Start Avoid That")
+            self.mimi.ttsSpeak("Start Avoid That")
             rospy.sleep(1.0)
             self.nav.movePlace('entrance')
             rospy.sleep(1.0)
             rospy.loginfo(" Finished the state1")
             rospy.sleep(1.0)
-            self.mimi.speak("Finished Avoid That")
+            self.mimi.ttsSpeak("Finished Avoid That")
             rospy.loginfo(" Finished Avoid That")
             return 2
         except rospy.ROSInterruptException:

@@ -20,6 +20,7 @@ class MimiControlClass():
         #Publisher
         self.cmd_vel_pub = rospy.Publisher('/cmd_vel_mux/input/teleop', Twist, queue_size = 1)#kobukiの前進後進
         self.m6_pub = rospy.Publisher('/m6_controller/command', Float64, queue_size = 1)
+        self.tts_pub = rospy.Publisher('/tts', String, queue_size = 1)
         #Subscriber
         self.laser_sub = rospy.Subscriber('/scan', LaserScan, self.getLaserCB)
  
@@ -54,6 +55,13 @@ class MimiControlClass():
         voice_cmd = '/usr/bin/picospeaker -r -25 -p 5 %s' %sentense
         subprocess.call(voice_cmd.strip().split(' '))
 
+    def ttsSpeak(self, sentense):
+        data = String()
+        data.data = sentense
+        rospy.sleep(0.1)
+        self.tts_pub.publish(data)
+        rospy.sleep(0.5)
+
     
 class NavigationClass():
     def __init__(self):
@@ -74,7 +82,7 @@ class NavigationClass():
         place_name.data = receive_msg
         print place_name
         rospy.loginfo(" Move to " + str(place_name.data))
-        self.mimi.speak("I move to " + str(place_name.data))
+        self.mimi.ttsSpeak("I move to " + str(place_name.data))
         rospy.sleep(0.1)
         self.navigation_command_pub.publish(place_name)
         while self.navigation_result_flg == False and not rospy.is_shutdown():
@@ -83,7 +91,7 @@ class NavigationClass():
         rospy.sleep(0.5)
         self.navigation_result_flg = False
         rospy.loginfo(" Arrived " + str(place_name.data))
-        self.mimi.speak("I arrived " + str(place_name.data))
+        self.mimi.ttsSpeak("I arrived " + str(place_name.data))
         rospy.sleep(1.0)
 
 class ObjectRecognizeClass():
@@ -137,12 +145,12 @@ class MoveObject():#---------------------------------------------------state0
                 rospy.sleep(1.0)
             initial_distance = self.mimi.front_laser_dist
             print initial_distance
-            self.mimi.speak("Please open the door")
+            self.mimi.ttsSpeak("Please open the door")
             while not rospy.is_shutdown() and self.mimi.front_laser_dist <= initial_distance + 0.88:#試走場のドアの幅を参考
                 rospy.loginfo(" Waiting for door open")
                 rospy.sleep(2.0)
             rospy.sleep(2.0)
-            self.mimi.speak("Thank you")
+            self.mimi.ttsSpeak("Thank you")
             while not rospy.is_shutdown() and not self.mimi.front_laser_dist < 2.0:
                 self.mimi.linearControl(0.25)
             rospy.sleep(0.5)
@@ -156,12 +164,10 @@ class MoveObject():#---------------------------------------------------state0
             print '-' *80
             rospy.loginfo(" Start the state0")
             rospy.sleep(1.0)
-            self.mimi.speak("Start Pick and place")
-            rospy.sleep(0.5)
+            self.mimi.ttsSpeak("Start Pick and place")
+            rospy.sleep(1.0)
             self.mimi.motorControl(6, 0.3)
-            rospy.sleep(0.5)
-            self.mimi.speak("Approach the object")
-            rospy.sleep(0.5)
+            rospy.sleep(1.0)
             #self.doorOpenStart()
             rospy.sleep(0.5)
             self.nav.movePlace('table')
@@ -199,21 +205,21 @@ class PickObject():#----------------------------------------------------state1
             for i in range(10):
                 self.mimi.angularControl(0.3)
                 if i == 10:
-                    self.mimi.speak("I can't find object")
+                    self.mimi.ttsSpeak("I can't find object")
                     rospy.sleep(1.0)
-                    self.mimi.speak("Please help me")
+                    self.mimi.ttsSpeak("Please help me")
                     self.mimi.angularControl(0)
                     break
         self.object_list_flg = False
         self.object_name = self.object_req.object_list[0]
-        self.mimi.speak("I find "+ self.object_name)
+        self.mimi.ttsSpeak("I find "+ self.object_name)
         rospy.loginfo(" Find " + self.object_name)
         rospy.sleep(1.0)
         
     def startObjectGrasp(self):
         rospy.sleep(0.5)
         rospy.loginfo("Grasp " + self.object_name)
-        self.mimi.speak("I grasp " + self.object_name)
+        self.mimi.ttsSpeak("I grasp " + self.object_name)
         grasp_req = String()
         grasp_req.data = self.object_name
         rospy.sleep(0.1)
@@ -265,11 +271,6 @@ class PlaceObject():#-----------------------------------------------------------
         while not rospy.is_shutdown() and self.object_place_flg == False:
             rospy.loginfo(" Waiting for placing...")
             rospy.sleep(2.5)
-        self.object_place_req_pub.publish(place_req)
-        print 'Object Placing'
-        while not rospy.is_shutdown() and self.object_place_flg == False:
-            rospy.loginfo(" Waiting for placing...")
-            rospy.sleep(2.5)
         rospy.sleep(0.5)
         self.object_place_flg = False
 
@@ -286,7 +287,7 @@ class PlaceObject():#-----------------------------------------------------------
             rospy.sleep(1.0)
             rospy.loginfo(" Finish the state2")
             rospy.loginfo(" Finished pick and place")
-            self.mimi.speak("Finished pick and place")
+            self.mimi.ttsSpeak("Finished pick and place")
             return 4
         except rospy.ROSInterruptException:
             rospy.loginfo(" Interrupted")
