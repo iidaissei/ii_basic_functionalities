@@ -41,7 +41,6 @@ class MimiControlClass():
         self.tts_pub.publish(data)
         rospy.sleep(0.5)
 
-
 class NavigationClass():
     def __init__(self):
         #Publisher
@@ -74,40 +73,56 @@ class NavigationClass():
         self.mimi.ttsSpeak("I arrived " + str(place_name.data))
         rospy.sleep(1.0)
 
-
 class AvoidThat():
     def __init__(self):
+        #Subscriber
+        rospy.Subscriber('/task_2_start', Bool , self.task_2_startCB)
+
+        self.task_2_start_flg = Bool()
         self.nav = NavigationClass()
         self.mimi = MimiControlClass()
 
-    def moveStartPosition(self):#--------------------------------state0
-        try:
-            print '-' *80
-            rospy.loginfo(" Start the state0")
-            rospy.sleep(1.0)
-            self.mimi.ttsSpeak("Start Avoid That")
-            rospy.sleep(1.0)
-            #self.nav.movePlace('shelf')
-            rospy.sleep(1.0)
-            rospy.loginfo(" Finished the state0")
-            rospy.sleep(1.0)
-            return 1
-        except rospy.ROSInterruptException:
-            rospy.loginfo(" Interrupted")
-            pass
-    
-    def moveDestination(self):#----------------------------------state1
+    def task_2_startCB(self, receive_msg):
+        self.task_2_start_flg = receive_msg.data
+
+    def waitingTopic(self):#---------------------state0
+        while not rospy.is_shutdown():
+            if self.task_2_start_flg == True:
+                rospy.sleep(2.0)
+                self.task_2_start_flg = False
+                return 1
+            else:
+                return 0
+
+    def moveStartPosition(self):#--------------------------------state1
         try:
             print '-' *80
             rospy.loginfo(" Start the state1")
             rospy.sleep(1.0)
-            self.nav.movePlace('entrance')
+            self.mimi.ttsSpeak("Start Avoid That")
+            #rospy.sleep(1.0)
+            #self.nav.movePlace('shelf')
             rospy.sleep(1.0)
             rospy.loginfo(" Finished the state1")
             rospy.sleep(1.0)
+            return 2
+        except rospy.ROSInterruptException:
+            rospy.loginfo(" Interrupted")
+            pass
+    
+    def moveDestination(self):#----------------------------------state2
+        try:
+            print '-' *80
+            rospy.loginfo(" Start the state2")
+            #self.mimi.ttsSpeak("Start Avoid That")
+            rospy.sleep(1.0)
+            self.nav.movePlace('entrance')
+            rospy.sleep(1.0)
+            rospy.loginfo(" Finished the state2")
+            rospy.sleep(1.0)
             self.mimi.ttsSpeak("Finished Avoid That")
             rospy.loginfo(" Finished Avoid That")
-            return 2
+            return 3
         except rospy.ROSInterruptException:
             rospy.loginfo(" Interrupted")
             pass
@@ -118,10 +133,12 @@ if __name__ == '__main__':
     try:
         state = 0
         at = AvoidThat()
-        while not rospy.is_shutdown() and not state == 2:
+        while not rospy.is_shutdown() and not state == 3:
             if state == 0:
+                state = at.waitingTopic()
+            elif state == 1:
                 state = at.moveStartPosition()
-            if state == 1:
+            elif state == 2:
                 state = at.moveDestination()
     except rospy.ROSInterruptException:
         rospy.loginfo(" Interrupted")

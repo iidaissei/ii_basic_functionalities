@@ -243,6 +243,7 @@ class PlaceObject():#-----------------------------------------------------------
     def __init__(self):
         #Publisher
         self.object_place_req_pub = rospy.Publisher('/arm/changing_pose_req', String, queue_size=1)#objectを置く
+        self.task_2_start_pub = rospy.Publisher('/task_2_start', Bool , queue_size = 1)
         #Subscriber
         rospy.Subscriber('/arm/changing_pose_res', Bool, self.getObjectPlaseCB)
         self.object_place_res_sub = rospy.Subscriber('/arm/changing_pose_res', Bool, self.getObjectPlaseCB)
@@ -280,6 +281,11 @@ class PlaceObject():#-----------------------------------------------------------
             rospy.loginfo(" Finish the state2")
             rospy.loginfo(" Finished pick and place")
             self.mimi.ttsSpeak("Finished pick and place")
+            data = Bool()
+            data.data = True
+            rospy.sleep(0.1)
+            self.task_2_start_pub.publish(data)
+            rospy.loginfo(" Published '/task_2_start' topic")
             return 4
         except rospy.ROSInterruptException:
             rospy.loginfo(" Interrupted")
@@ -289,7 +295,7 @@ class PlaceObject():#-----------------------------------------------------------
 if __name__ == '__main__':
     rospy.init_node("pick_and_place", anonymous = True)
     try:
-        state = 0
+        state = 2
         moveO = MoveObject()
         pickO = PickObject()
         placeO = PlaceObject()

@@ -14,7 +14,6 @@ from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Pose, PoseWithCovarianceStamped, Point, Quaternion, Twist
 from std_msgs.msg import String, Bool, Int8, Float64
 
-
 class MimiControlClass():
     def __init__(self):
         #Publisher
@@ -61,7 +60,6 @@ class MimiControlClass():
         self.tts_pub.publish(data)
         rospy.sleep(0.5)
 
-   
 class NavigationClass():
     def __init__(self):
         #Publisher

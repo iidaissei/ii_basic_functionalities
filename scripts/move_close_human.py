@@ -65,16 +65,14 @@ class Navigation(self):
         #Publisher
         self.simple_goal_pub = rospy.Publisher('/move_base_simple/goal',PoseStamped , queue_size = 1)
         #Subscriber
-        rospy.Subscriber('/tf', TFMessage, self.getTfCB)
+        rospy.Subscriber('/odom', Odometry, self.getTfCB)
         rospy.Subscriber('move_base/status', GoalStatusArray, self.getStatusCB) 
         #Service
         rospy.wait_for_service('move_base/clear_costmaps')
         self.clear_costmaps = rospy.ServiceProxy('move_base/clear_costmaps', Empty)
 
     def getTfCB(self, receive_msg):#向きのみを購読
-        if receive_msg.transforms[0].header.frame_id == 'map':
-            if receive_msg.transforms[0].child_frame_id == 'base_link':
-                self.tf_pose_w = receive_msg.transforms[0].transform.rotation.w
+        self.tf_pose_w = receive_msg.pose.pose.orientation.w
         self.sub_tf_flg = True
  
     def navigation(self):#---------------------------------------------------state3
