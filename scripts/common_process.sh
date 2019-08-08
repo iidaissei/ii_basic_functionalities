@@ -8,5 +8,7 @@ xterm -geometry 80x5+0+320 -e "/opt/ros/kinetic/bin/roslaunch realsense2_camera 
 sleep 3s
 xterm -geometry 80x5+0+420 -e "/opt/ros/kinetic/bin/rosrun picotts picotts.exe" &
 sleep 3s
+xterm -geometry 80x5+0+520 -e "/opt/ros/kinetic/bin/rostopic pub /picotts/engine std_msgs/String "data: 'microsoft'"" &
+sleep 3s
 xterm -geometry 80x5+0+620 -e "/opt/ros/kinetic/bin/roslaunch turtlebot_navigation amcl_demo.launch map_file:=/home/athome/map/sisoujyou2.yaml" &
 sleep 5s
