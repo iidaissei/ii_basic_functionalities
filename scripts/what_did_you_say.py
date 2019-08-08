@@ -26,12 +26,12 @@ class MimiControlClass():
         self.min_laser_dist = 999.9
         self.front_laser_dist = 999.9
         self.twist_cmd = Twist()
-        
+
     def getLaserCB(self, laser_scan):
         self.laser_dist = laser_scan.ranges
         self.min_laser_dist = min(laser_scan.ranges[180:540])
         self.front_laser_dist = laser_scan.ranges[359]
-        
+
     def linearControl(self, linear_num):
         self.twist_cmd.linear.x = linear_num
         self.cmd_vel_pub.publish(self.twist_cmd)
@@ -70,7 +70,7 @@ class NavigationClass():
         
         self.navigation_result_flg = False
         self.mimi = MimiControlClass()
-        
+ 
     def getNavigationResultCB(self, result_msg):
         self.navigation_result_flg = result_msg.data
 
@@ -91,7 +91,6 @@ class NavigationClass():
         rospy.loginfo(" Arrived " + str(place_name.data))
         self.mimi.ttsSpeak("I arrived " + str(place_name.data))
         rospy.sleep(1.0)
-
 
 class WhatDidYouSay():
     def __init__(self):
@@ -114,9 +113,9 @@ class WhatDidYouSay():
     def move_close_personCB(self, result_msg):
         self.move_close_person_flg = result_msg.data
 
-
     def conversationMethod(self):
         try:
+            self.mimi.ttsSpeak("Let's start conversation!")
             question_number = 1
             result = Bool()
             result.data = False
@@ -183,7 +182,7 @@ class WhatDidYouSay():
         try:
             print '-' *80
             rospy.loginfo(" Start the state2")
-            self.mimi.ttsSpeak("Let's start conversation")
+            rospy.sleep(0.5)
             self.conversationMethod()
             rospy.sleep(1.0)
             rospy.loginfo(" Finished the state2")
@@ -206,7 +205,6 @@ class WhatDidYouSay():
         except rospy.ROSInterruptException:
             rospy.loginfo(" Interrupted")
             pass
-
 
 if __name__ == '__main__':
     rospy.init_node("what_did_you_say", anonymous = True)

@@ -14,7 +14,6 @@ from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Pose, PoseWithCovarianceStamped, Point, Quaternion, Twist
 from std_msgs.msg import String, Bool, Int8, Float64
 
-
 class MimiControlClass():
     def __init__(self):
         #Publisher
@@ -26,7 +25,7 @@ class MimiControlClass():
  
         self.min_laser_dist = 999.9
         self.front_laser_dist = 999.9
-        
+
     def getLaserCB(self, laser_scan):
         self.laser_dist = laser_scan.ranges
         self.min_laser_dist = min(laser_scan.ranges[180:540])
@@ -61,7 +60,6 @@ class MimiControlClass():
         rospy.sleep(0.1)
         self.tts_pub.publish(data)
         rospy.sleep(0.5)
-
     
 class NavigationClass():
     def __init__(self):
@@ -73,7 +71,7 @@ class NavigationClass():
         
         self.navigation_result_flg = False
         self.mimi = MimiControlClass()
-        
+
     def getNavigationResultCB(self, result_msg):
         self.navigation_result_flg = result_msg.data
 
@@ -109,7 +107,7 @@ class ObjectRecognizeClass():
         self.object_list = []
         self.object_list_flg = False
         self.object_num = -1
-        
+
     def getObjectCountCB(self, result_msg):
         self.object_num = result_msg.data
        
@@ -123,7 +121,6 @@ class ObjectRecognizeClass():
 
     def getObjectRecognizeResultCB(self, result_msg):
         self.object_recog_flg = result_msg.data
-
 
 class MoveObject():#---------------------------------------------------state0
     def __init__(self):
@@ -143,8 +140,11 @@ class MoveObject():#---------------------------------------------------state0
                 rospy.sleep(2.0)
             rospy.sleep(2.0)
             self.mimi.ttsSpeak("Thank you")
-            while not rospy.is_shutdown() and not self.mimi.front_laser_dist < 2.0:
+            #while not rospy.is_shutdown() and not self.mimi.front_laser_dist < 2.0:
+            #    self.mimi.linearControl(0.25)
+            for i in range(5):
                 self.mimi.linearControl(0.25)
+                rospy.sleep(0.2)
             rospy.sleep(0.5)
             rospy.loginfo(" Enter the room")
         except rospy.ROSInterruptException:
@@ -169,7 +169,6 @@ class MoveObject():#---------------------------------------------------state0
         except rospy.ROSInterruptException:
             rospy.loginfo(" Interrupted")
             pass
-
 
 class PickObject():#----------------------------------------------------state1
     def __init__(self):
@@ -238,7 +237,6 @@ class PickObject():#----------------------------------------------------state1
             rospy.loginfo(" Interrupted")
             pass
 
-
 class PlaceObject():#-------------------------------------------------------------------------------state2
     def __init__(self):
         #Publisher
@@ -291,11 +289,10 @@ class PlaceObject():#-----------------------------------------------------------
             rospy.loginfo(" Interrupted")
             pass
 
-
 if __name__ == '__main__':
     rospy.init_node("pick_and_place", anonymous = True)
     try:
-        state = 2
+        state = 0
         moveO = MoveObject()
         pickO = PickObject()
         placeO = PlaceObject()

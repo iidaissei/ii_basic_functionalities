@@ -55,7 +55,7 @@ class MimiControlClass():
         data.data = sentense
         rospy.sleep(0.1)
         self.tts_pub.publish(data)
-        rospy.sleep(0.5)
+        rospy.sleep(1.0)
 
 class Navigation():
     def __init__(self):
@@ -84,8 +84,6 @@ class Navigation():
         except IndexError:
             pass
 
-
- 
     def navigation(self, object_coordinate_x, object_coordinate_y):#---------------------------------------------------state3
         try:
             rospy.loginfo(" Start the state3")
@@ -100,16 +98,16 @@ class Navigation():
             goal.header.stamp = rospy.Time.now()
             goal.pose.position.x = object_coordinate_x
             goal.pose.position.y = object_coordinate_y
+            goal.pose.orientation.z = self.tf_pose_z
             goal.pose.orientation.z = self.tf_pose_w
-            goal.pose.orientation.w = self.tf_pose_z
             #goal.pose.orientation.z = 0.997
             #goal.pose.orientation.w = -0.078 
             #print  self.tf_pose_w
             #print  self.tf_pose_z
             #q = tf.transformations.quaternion_from_euler(0, 0, self.pose_w)
             #goal.target_pose.pose.orientation = Quaternion()
-            rospy.loginfo(" Move to the point of human")
-            self.mimi.ttsSpeak("Move to the point of human")
+            rospy.loginfo(" Approach person")
+            self.mimi.ttsSpeak("Approach person")
             self.clear_costmaps()
             rospy.sleep(0.5)
             self.get_status = 0
@@ -127,7 +125,7 @@ class Navigation():
                     rospy.loginfo(" Buried in obstacle")
                     self.clear_costmaps()
                     print 'clear'
-            rospy.sleep(1.0)
+            rospy.sleep(2.0)
             rospy.loginfo(" Finished navigation")
         except rospy.ROSInterruptException:
             rospy.loginfo(" Interrupted")

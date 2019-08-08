@@ -64,7 +64,6 @@ class Navigation:
             self.location_pose_x = self.sub_tf.transforms[0].transform.translation.x
             self.location_pose_y = self.sub_tf.transforms[0].transform.translation.y
             self.location_pose_w = self.sub_tf.transforms[0].transform.rotation.z
-            #self.location_pose_w += 1.5 * self.location_pose_w * self.location_pose_w *self.location_pose_w
             self.location_list.append([self.location_name, self.location_pose_x, self.location_pose_y, self.location_pose_w])
             rospy.loginfo("Add *" + self.location_name + "* to the LocationList")
             self.location_name = 'Null'
@@ -97,12 +96,9 @@ class Navigation:
         goal.target_pose.pose.position.y = self.location_list[location_num][2]
         q = tf.transformations.quaternion_from_euler(0, 0, self.location_list[location_num][3]) 
         goal.target_pose.pose.orientation = Quaternion(q[0], q[1], q[2], q[3])
-<<<<<<< HEAD
         #goal.target_pose.pose.orientation = Quaternion(0, 0, 0, 1)
         self.clear_costmaps()
         rospy.sleep(0.5)
-=======
->>>>>>> 84aa79acfd9ab14946de754c30624aee23e2bdba
         ac.send_goal(goal)
         rospy.loginfo("Sended Goal")
         while not rospy.is_shutdown():

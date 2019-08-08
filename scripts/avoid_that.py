@@ -14,13 +14,11 @@ from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Pose, PoseWithCovarianceStamped, Point, Quaternion, Twist
 from std_msgs.msg import String, Bool, Int8, Float64
 
-
 class MimiControlClass():
     def __init__(self):
         #Publisher
         self.m6_pub = rospy.Publisher('/m6_controller/command', Float64, queue_size = 1)
         self.tts_pub = rospy.Publisher('/tts', String, queue_size = 1)
- 
 
     def motorControl(self, motor_name, value):
         if motor_name == 6:
@@ -126,7 +124,6 @@ class AvoidThat():
         except rospy.ROSInterruptException:
             rospy.loginfo(" Interrupted")
             pass
-
 
 if __name__ == '__main__':
     rospy.init_node("avoid_taht", anonymous = True)
