@@ -16,6 +16,7 @@ from get_distance_pcl.msg import Coordinate_xyz
 from actionlib_msgs.msg import GoalStatusArray
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from geometry_msgs.msg import Twist, Quaternion, Point, PoseStamped, PoseWithCovarianceStamped
+from nav_msgs.msg import Odometry
 
 class MimiControlClass():
     def __init__(self):
@@ -56,54 +57,72 @@ class MimiControlClass():
         self.tts_pub.publish(data)
         rospy.sleep(0.5)
 
-    def getStatusCB(self, receive_msg):
-        #navi_pubの状態を購読
-        self.get_status = receive_msg.status_list[0].status
-
-class Navigation(self):
+class Navigation():
     def __init__(self):
         #Publisher
         self.simple_goal_pub = rospy.Publisher('/move_base_simple/goal',PoseStamped , queue_size = 1)
         #Subscriber
         rospy.Subscriber('/odom', Odometry, self.getTfCB)
-        rospy.Subscriber('move_base/status', GoalStatusArray, self.getStatusCB) 
+        rospy.Subscriber('/move_base/status', GoalStatusArray, self.getStatusCB) 
         #Service
         rospy.wait_for_service('move_base/clear_costmaps')
         self.clear_costmaps = rospy.ServiceProxy('move_base/clear_costmaps', Empty)
 
+        self.mimi = MimiControlClass()
+
     def getTfCB(self, receive_msg):#向きのみを購読
         self.tf_pose_w = receive_msg.pose.pose.orientation.w
+        self.tf_pose_z = receive_msg.pose.pose.orientation.z
+        print 'w',self.tf_pose_w
+        print 'z',self.tf_pose_z
         self.sub_tf_flg = True
+
+    def getStatusCB(self, receive_msg):
+        try:
+            self.get_status = receive_msg.status_list[0].status
+            #print self.get_status
+        except IndexError:
+            pass
+
+
  
-    def navigation(self):#---------------------------------------------------state3
+    def navigation(self, object_coordinate_x, object_coordinate_y):#---------------------------------------------------state3
         try:
             rospy.loginfo(" Start the state3")
             rospy.sleep(0.1)
             self.mimi.motorControl(6, 0.3)
-            rospy.sleep(1.0)
+            rospy.sleep(2.0)
             while not rospy.is_shutdown() and self.sub_tf_flg == False:
                 rospy.sleep(1.0)
             self.sub_tf_flg = False
             goal = PoseStamped()
             goal.header.frame_id = 'map'
             goal.header.stamp = rospy.Time.now()
-            goal.pose.position.x = self.object_coordinate_x
-            goal.pose.position.y = self.object_coordinate_y
-            goal.pose.orientation.w = self.tf_pose_w
+            goal.pose.position.x = object_coordinate_x
+            goal.pose.position.y = object_coordinate_y
+            goal.pose.orientation.z = self.tf_pose_w
+            goal.pose.orientation.w = self.tf_pose_z
+            #goal.pose.orientation.z = 0.997
+            #goal.pose.orientation.w = -0.078 
+            #print  self.tf_pose_w
+            #print  self.tf_pose_z
             #q = tf.transformations.quaternion_from_euler(0, 0, self.pose_w)
-            #goal.target_pose.pose.orientation = Quaternion(q[0], q[1], q[2], q[3])
+            #goal.target_pose.pose.orientation = Quaternion()
             rospy.loginfo(" Move to the point of human")
             self.mimi.ttsSpeak("Move to the point of human")
             self.clear_costmaps()
             rospy.sleep(0.5)
-            while not rospy.is_shutdown() and not self.get_status == 3:
-                self.simple_goal_pub.publish(goal)
+            self.get_status = 0
+            self.simple_goal_pub.publish(goal)
+            print goal
+            while not rospy.is_shutdown() and not self.get_status == 10:
+                #self.simple_goal_pub.publish(goal)
                 if self.get_status == 1:
                     rospy.loginfo(" Got out of the obstacle")
                     rospy.sleep(1.5)
                 elif self.get_status == 3:
                     rospy.loginfo(" Has arrived")
-                    self.get_status = 0
+                    self.get_status = 10
                 elif self.get_status == 4:
                     rospy.loginfo(" Buried in obstacle")
                     self.clear_costmaps()
@@ -219,9 +238,9 @@ class MoveClosePerosn():
             rospy.loginfo(" Start the state3")
             rospy.sleep(1.0)
             self.nav.navigation(self.object_coordinate_x, self.object_coordinate_y)
-            rospy.sleep(0.5)
-            self.turnPerson()
-            rospy.sleep(1.0)
+            rospy.sleep(3.0)
+            #self.turnPerson()
+            rospy.sleep(2.0)
             rospy.loginfo(" I found person")
             self.mimi.ttsSpeak("I found person")
             rospy.loginfo(" Finished the state3")
