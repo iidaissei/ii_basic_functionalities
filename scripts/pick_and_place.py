@@ -279,6 +279,9 @@ class PlaceObject():#-----------------------------------------------------------
             rospy.loginfo(" Finish the state2")
             rospy.loginfo(" Finished pick and place")
             self.mimi.ttsSpeak("Finished pick and place")
+            rospy.sleep(2.0)
+            self.nav.movePlace('AvoidThat startposition')
+            rospy.sleep(1.0)
             data = Bool()
             data.data = True
             rospy.sleep(0.1)
@@ -292,7 +295,7 @@ class PlaceObject():#-----------------------------------------------------------
 if __name__ == '__main__':
     rospy.init_node("pick_and_place", anonymous = True)
     try:
-        state = 0
+        state = 2
         moveO = MoveObject()
         pickO = PickObject()
         placeO = PlaceObject()

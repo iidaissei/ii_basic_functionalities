@@ -54,21 +54,19 @@ class NavigationClass():
 
     def movePlace(self, receive_msg):
         self.mimi.motorControl(6, 0.3)
-        place_name = String()
-        place_name.data = receive_msg
-        print place_name
-        rospy.loginfo(" Move to " + str(place_name.data))
-        self.mimi.ttsSpeak("I move to " + str(place_name.data))
+        rospy.sleep(0.5)
+        rospy.loginfo(" Move to " + receive_msg)
+        self.mimi.ttsSpeak("I move to " + receive_msg)
         rospy.sleep(0.5)
         self.navigation_result_flg = False
-        self.navigation_command_pub.publish(place_name)
+        self.navigation_command_pub.publish(receive_msg)
         while self.navigation_result_flg == False and not rospy.is_shutdown():
             rospy.sleep(1.0)
             rospy.loginfo(" Moving...")
         rospy.sleep(0.5)
         self.navigation_result_flg = False
-        rospy.loginfo(" Arrived " + str(place_name.data))
-        self.mimi.ttsSpeak("I arrived " + str(place_name.data))
+        rospy.loginfo(" Arrived " + receive_msg)
+        self.mimi.ttsSpeak("I arrived " + receive_msg)
         rospy.sleep(1.0)
 
 class AvoidThat():
@@ -97,10 +95,9 @@ class AvoidThat():
             print '-' *80
             rospy.loginfo(" Start the state1")
             rospy.sleep(1.0)
-            self.nav.movePlace("AvoidThat startposition")
-            self.nav.movePlace("table")
+            self.mimi.ttsSpeak("Start Avoid That")
             rospy.sleep(1.0)
-            #self.mimi.ttsSpeak("Start Avoid That")
+            self.nav.movePlace("goal")
             rospy.sleep(1.0)
             rospy.loginfo(" Finished the state1")
             rospy.sleep(1.0)
@@ -114,12 +111,14 @@ class AvoidThat():
             print '-' *80
             rospy.loginfo(" Start the state2")
             rospy.sleep(1.0)
-            self.nav.movePlace('goal')
-            rospy.sleep(1.0)
-            rospy.loginfo(" Finished the state2")
-            rospy.sleep(1.0)
             self.mimi.ttsSpeak("Finished Avoid That")
             rospy.loginfo(" Finished Avoid That")
+            rospy.sleep(1.0)
+            rospy.loginfo(" Move WhatDidYouSay")
+            self.nav.movePlace("WhatDidYouSay startposition")
+            rospy.sleep(1.0)
+            self.mimi.ttsSpeak("Start WhatDidYouSay setup")
+            rospy.sleep(1.0)
             return 3
         except rospy.ROSInterruptException:
             rospy.loginfo(" Interrupted")

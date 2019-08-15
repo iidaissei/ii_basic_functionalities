@@ -28,7 +28,7 @@ class Navigation:
         self.clear_costmaps = rospy.ServiceProxy('move_base/clear_costmaps', Empty)
 
         self.location_name = 'Null'
-        self.location_list = [['cupboard', 6.91, 0.5, -0.733, 0.679], ['entrance', 0.327, 0.0055,-0.03, 0.999], ['table', 4.75, 0.969, 0.662, 0.757 ], ['AvoidThat startposition', 5.42, 4.1, 0.999, 0.03 ], ['goal', 2.57, 1.31, 0.999, 0.03], ['WhatDidYouSay startposition', 6.82, 3.72, 0.999, 0.03], ['operator', 2.81, 4.35, 0.00, 0.999]]#要素3・4は/odom orientationのz,wを参考
+        self.location_list = [['cupboard', 6.91, 0.5, -0.733, 0.679], ['entrance', 0.327, 0.0055,-0.03, 0.999], ['table', 4.75, 0.969, 0.662, 0.757 ], ['AvoidThat startposition', 5.42, 4.1, 0.999, 0.03 ], ['WhatDidYouSay startposition', 6.82, 3.72, 0.999, 0.03], ['operator', 2.81, 4.35, 0.00, 0.999], ['goal', 4.3, 3.28, 0.008, 0.999]]#要素3・4は/odom orientationのz,wを参考
         self.location_pose_x = 0
         self.location_pose_y = 0
         self.location_pose_w = 0
@@ -96,7 +96,7 @@ class Navigation:
         goal.target_pose.pose.position.y = self.location_list[location_num][2]
         goal.target_pose.pose.orientation.z = self.location_list[location_num][3]
         goal.target_pose.pose.orientation.w = self.location_list[location_num][4]
-        rospy.sleep(0.5)
+        rospy.sleep(1.0)
         self.clear_costmaps()
         rospy.sleep(0.5)
         ac.send_goal(goal)

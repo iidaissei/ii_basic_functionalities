@@ -206,7 +206,7 @@ class WhatDidYouSay():
 if __name__ == '__main__':
     rospy.init_node("what_did_you_say", anonymous = True)
     try:
-        state = 0
+        state = 2
         wds = WhatDidYouSay()
         while not rospy.is_shutdown() and not state == 4:
             if state == 0:
