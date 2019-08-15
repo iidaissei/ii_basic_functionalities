@@ -59,11 +59,11 @@ class NavigationClass():
         print place_name
         rospy.loginfo(" Move to " + str(place_name.data))
         self.mimi.ttsSpeak("I move to " + str(place_name.data))
-        rospy.sleep(0.1)
+        rospy.sleep(0.5)
         self.navigation_result_flg = False
         self.navigation_command_pub.publish(place_name)
         while self.navigation_result_flg == False and not rospy.is_shutdown():
-            rospy.sleep(2.5)
+            rospy.sleep(1.0)
             rospy.loginfo(" Moving...")
         rospy.sleep(0.5)
         self.navigation_result_flg = False
@@ -97,9 +97,10 @@ class AvoidThat():
             print '-' *80
             rospy.loginfo(" Start the state1")
             rospy.sleep(1.0)
-            self.mimi.ttsSpeak("Start Avoid That")
-            #rospy.sleep(1.0)
-            #self.nav.movePlace('shelf')
+            self.nav.movePlace("AvoidThat startposition")
+            self.nav.movePlace("table")
+            rospy.sleep(1.0)
+            #self.mimi.ttsSpeak("Start Avoid That")
             rospy.sleep(1.0)
             rospy.loginfo(" Finished the state1")
             rospy.sleep(1.0)
@@ -112,9 +113,8 @@ class AvoidThat():
         try:
             print '-' *80
             rospy.loginfo(" Start the state2")
-            #self.mimi.ttsSpeak("Start Avoid That")
             rospy.sleep(1.0)
-            self.nav.movePlace('entrance')
+            self.nav.movePlace('goal')
             rospy.sleep(1.0)
             rospy.loginfo(" Finished the state2")
             rospy.sleep(1.0)

@@ -46,10 +46,6 @@ class MimiControlClass():
         self.cmd_vel_pub.publish(twist_cmd)
         twist_cmd.angular.z = 0
 
-    def speak(self, sentense):
-        voice_cmd = '/usr/bin/picospeaker -r -25 -p 5 %s' %sentense
-        subprocess.call(voice_cmd.strip().split(' '))
-
     def ttsSpeak(self, sentense):
         data = String()
         data.data = sentense
@@ -73,14 +69,11 @@ class Navigation():
     def getTfCB(self, receive_msg):#向きのみを購読
         self.tf_pose_w = receive_msg.pose.pose.orientation.w
         self.tf_pose_z = receive_msg.pose.pose.orientation.z
-        print 'w',self.tf_pose_w
-        print 'z',self.tf_pose_z
         self.sub_tf_flg = True
 
     def getStatusCB(self, receive_msg):
         try:
             self.get_status = receive_msg.status_list[0].status
-            #print self.get_status
         except IndexError:
             pass
 
@@ -100,12 +93,6 @@ class Navigation():
             goal.pose.position.y = object_coordinate_y
             goal.pose.orientation.z = self.tf_pose_z
             goal.pose.orientation.z = self.tf_pose_w
-            #goal.pose.orientation.z = 0.997
-            #goal.pose.orientation.w = -0.078 
-            #print  self.tf_pose_w
-            #print  self.tf_pose_z
-            #q = tf.transformations.quaternion_from_euler(0, 0, self.pose_w)
-            #goal.target_pose.pose.orientation = Quaternion()
             rospy.loginfo(" Approach person")
             self.mimi.ttsSpeak("Approach person")
             self.clear_costmaps()
@@ -121,6 +108,7 @@ class Navigation():
                 elif self.get_status == 3:
                     rospy.loginfo(" Has arrived")
                     self.get_status = 10
+                    break
                 elif self.get_status == 4:
                     rospy.loginfo(" Buried in obstacle")
                     self.clear_costmaps()
@@ -162,17 +150,17 @@ class MoveClosePerosn():
     def turnPerson(self):
         try:
             rospy.loginfo(" Turn to person")
-            self.mimi.motorControl(6, -0.1)
+            self.mimi.motorControl(6, -0.2)
             rospy.sleep(2.0)
             self.person_flg = False
             while not rospy.is_shutdown() and self.person_flg == False:
                 for i in range(24):
                     if i <= 8 and self.person_flg  == False:
                         self.mimi.angularControl(0.61)
-                        rospy.sleep(0.5)
+                        rospy.sleep(0.3)
                     elif i >8 and self.person_flg == False:
                         self.mimi.angularControl(-0.61)
-                        rospy.sleep(0.5)
+                        rospy.sleep(0.3)
                     if i == 24 and self.person_flg == False:
                         rospy.loginfo(" Could not find person")
                         for j in range(24):
@@ -180,9 +168,8 @@ class MoveClosePerosn():
                         break
                 break
             self.person_flg = False
-            rospy.sleep(0.1)
+            rospy.sleep(1.0)
             rospy.loginfo(" Turned to person")
-            rospy.sleep(2.0)
         except rospy.ROSInterruptException:
             rospy.loginfo(" Interrupted")
             pass
@@ -201,6 +188,7 @@ class MoveClosePerosn():
 
     def findPerson(self):#----------------------------------------------------state1
         try:
+            print '-'*80
             rospy.loginfo(" Start  the state1")
             rospy.sleep(0.1)
             self.turnPerson()
@@ -213,17 +201,17 @@ class MoveClosePerosn():
 
     def getHumanCoordinate(self):#--------------------------------------------state2
         try:
+            print '-'*80
             rospy.loginfo(" Start the state2")
             data = Bool()
             data.data = True
-            rospy.sleep(2.0)
+            rospy.sleep(1.0)
             self.human_detect_pub.publish(data)
             while not rospy.is_shutdown() and self.object_xy_flg == False:
                 self.human_detect_pub.publish(data)
                 rospy.sleep(0.5)
             print self.object_coordinate_x
             print self.object_coordinate_y
-            rospy.sleep(0.1)
             rospy.loginfo(" Get human coordinate")
             rospy.loginfo(" Finished the state2")
             return 3
@@ -234,17 +222,19 @@ class MoveClosePerosn():
     def ApproachPerson(self):#------------------------------------------------state3
         try:
             rospy.loginfo(" Start the state3")
-            rospy.sleep(1.0)
+            rospy.sleep(0.5)
             self.nav.navigation(self.object_coordinate_x, self.object_coordinate_y)
-            rospy.sleep(3.0)
-            #self.turnPerson()
+            rospy.sleep(1.0)
+            self.turnPerson()
             rospy.sleep(2.0)
+            self.mimi.motorControl(6, 0.5)
+            rospy.sleep(1.5)
             rospy.loginfo(" I found person")
             self.mimi.ttsSpeak("I found person")
             rospy.loginfo(" Finished the state3")
             result = String()
             result.data = 'stop'
-            rospy.sleep(1.0)
+            rospy.sleep(0.5)
             self.move_close_person_pub.publish(result)
             rospy.loginfo(" Finish move_close_person")
             return 4

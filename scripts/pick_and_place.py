@@ -142,8 +142,8 @@ class MoveObject():#---------------------------------------------------state0
             self.mimi.ttsSpeak("Thank you")
             #while not rospy.is_shutdown() and not self.mimi.front_laser_dist < 2.0:
             #    self.mimi.linearControl(0.25)
-            for i in range(5):
-                self.mimi.linearControl(0.25)
+            for i in range(48):
+                self.mimi.linearControl(0.3)#linear0.3を15回で80cm前進
                 rospy.sleep(0.2)
             rospy.sleep(0.5)
             rospy.loginfo(" Enter the room")
@@ -160,7 +160,7 @@ class MoveObject():#---------------------------------------------------state0
             rospy.sleep(1.0)
             self.mimi.motorControl(6, 0.3)
             rospy.sleep(1.0)
-            #self.doorOpenStart()
+            self.doorOpenStart()
             rospy.sleep(0.5)
             self.nav.movePlace('table')#objectの置き場所を送る
             rospy.sleep(0.5)

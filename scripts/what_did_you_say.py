@@ -118,12 +118,12 @@ class WhatDidYouSay():
             self.mimi.ttsSpeak("Let's start conversation!")
             question_number = 1
             result = Bool()
-            result.data = False
+            result.data = True
             while not rospy.is_shutdown() and not question_number == 5:
                 rospy.sleep(1.0)
                 rospy.loginfo(" Question Number: " + str(question_number))
                 self.mimi.ttsSpeak("Please give me a question")
-                rospy.sleep(0.1)
+                rospy.sleep(0.8)
                 self.conversation_start_pub.publish(result)
                 rospy.loginfo(" Published 'conversation/start' Topic")
                 while not rospy.is_shutdown() and  self.conversation_stop_flg == True:
@@ -147,7 +147,7 @@ class WhatDidYouSay():
             rospy.sleep(1.0)
             self.mimi.ttsSpeak("Start What Did You Say")
             rospy.sleep(1.0)
-            #self.nav.movePlace('entrance')#スタート地点に移動
+            self.nav.movePlace('WhatDidYouSay startposition')#スタート地点に移動
             rospy.sleep(1.0)
             rospy.loginfo(" Finished the state0")
             return 1
@@ -162,16 +162,13 @@ class WhatDidYouSay():
             rospy.loginfo(" Start the state1")
             data = String()
             data.data = 'start'
+            rospy.sleep(0.5)
             self.move_close_person_pub.publish(data)
             while not rospy.is_shutdown() and not self.move_close_person_flg == 'stop':
                 #rospy.loginfo(" Waiting for topic")
                 rospy.sleep(0.1)
             self.move_close_person_flg = 'Null'
-            rospy.sleep(2.0)
-            self.mimi.ttsSpeak("My name is mimi")
             rospy.sleep(1.0)
-            self.mimi.ttsSpeak("Nice to meet you")
-            rospy.sleep(2.0)
             rospy.loginfo(" Finished the state1")
             return 2
         except rospy.ROSInterruptException:
@@ -182,7 +179,7 @@ class WhatDidYouSay():
         try:
             print '-' *80
             rospy.loginfo(" Start the state2")
-            rospy.sleep(0.5)
+            rospy.sleep(0.1)
             self.conversationMethod()
             rospy.sleep(1.0)
             rospy.loginfo(" Finished the state2")

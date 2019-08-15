@@ -28,7 +28,7 @@ class Navigation:
         self.clear_costmaps = rospy.ServiceProxy('move_base/clear_costmaps', Empty)
 
         self.location_name = 'Null'
-        self.location_list = [['shelf', 2.062, -0.217, 0.015], ['entrance', 2.52, -6, 1.55], ['table', -0.35, -0.532, -3.088]]#第四要素は向き
+        self.location_list = [['cupboard', 6.91, 0.5, -0.733, 0.679], ['entrance', 0.327, 0.0055,-0.03, 0.999], ['table', 4.75, 0.969, 0.662, 0.757 ], ['AvoidThat startposition', 5.42, 4.1, 0.999, 0.03 ], ['goal', 2.57, 1.31, 0.999, 0.03], ['WhatDidYouSay startposition', 6.82, 3.72, 0.999, 0.03], ['operator', 2.81, 4.35, 0.00, 0.999]]#要素3・4は/odom orientationのz,wを参考
         self.location_pose_x = 0
         self.location_pose_y = 0
         self.location_pose_w = 0
@@ -94,9 +94,9 @@ class Navigation:
         goal.target_pose.header.stamp = rospy.Time.now()
         goal.target_pose.pose.position.x = self.location_list[location_num][1]
         goal.target_pose.pose.position.y = self.location_list[location_num][2]
-        q = tf.transformations.quaternion_from_euler(0, 0, self.location_list[location_num][3]) 
-        goal.target_pose.pose.orientation = Quaternion(q[0], q[1], q[2], q[3])
-        #goal.target_pose.pose.orientation = Quaternion(0, 0, 0, 1)
+        goal.target_pose.pose.orientation.z = self.location_list[location_num][3]
+        goal.target_pose.pose.orientation.w = self.location_list[location_num][4]
+        rospy.sleep(0.5)
         self.clear_costmaps()
         rospy.sleep(0.5)
         ac.send_goal(goal)
@@ -112,6 +112,7 @@ class Navigation:
                 self.destination = 'Null'
                 result = Bool()
                 result.data = True
+                rospy.sleep(0.3)
                 self.navigation_result_pub.publish(result)
                 rospy.loginfo("Published result")
                 num = 0
