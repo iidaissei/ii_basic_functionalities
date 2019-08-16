@@ -25,7 +25,18 @@ class Navigation:
         self.clear_costmaps = rospy.ServiceProxy('move_base/clear_costmaps', Empty)
 
         self.location_name = 'Null'
-        self.location_list = [['Table', 2.87, 1.9, -0.715, 0.698], ['Drawer', 1.81, 0.16, -0.680, 0.732], ['Cupboard', 2.61, 0.08, -0.680, 0.732 ], ['Couch', 3.34, 0.216, -0.680, 0.732 ], ['WhatDidYouSay startposition', 1.87, 4.3, 0.000, 0.999], ['Exit', 4.41, 5.76, -0.999, 0.041]]#要素3・4は/odom orientationのz,wを参考
+        self.location_list = [['entrance', 0.117, 0.32, , ],
+                              ['operator', 2.15, 1, , ],
+                              ['table', 2.95, 1.74, 0.696, 0.717],
+                              ['drawer', 1.81, 0.38, -0.760, 0.642],
+                              ['cupboard', 2.61, 0.08, -0.760, 0.642],
+                              ['couch', 3.34, 0.416, -0.760, 0.642],
+                              ['bin', 1.87, 4.3, -0.760, 0.642],
+                              ['sofa', 1.45, 4.56, 0.696, 0.717],
+                              ['chair', 2.1, 4.55,  0.696, 0.717],
+                              ['shelf', 3.44, 4.52, 0.696, 0.717],
+                              ['exit', 4.04, 5.89, 0.696, 0.717]
+                              ]
         self.location_pose_x = 0
         self.location_pose_y = 0
         self.location_pose_w = 0

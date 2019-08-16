@@ -224,7 +224,7 @@ class PickObject():#----------------------------------------------------state1
         try:
             print '-' *80
             rospy.loginfo(" Start the state1")
-            self.mimi.motorControl(6, -0.07)
+            self.mimi.motorControl(6, -0.05)
             rospy.sleep(1.0)
             self.findObject()
             rospy.sleep(1.0)

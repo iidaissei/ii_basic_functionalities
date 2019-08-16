@@ -92,7 +92,7 @@ class Navigation():
             goal.pose.position.x = object_coordinate_x
             goal.pose.position.y = object_coordinate_y
             goal.pose.orientation.z = self.tf_pose_z
-            goal.pose.orientation.z = self.tf_pose_w
+            goal.pose.orientation.w = self.tf_pose_w
             rospy.loginfo(" Approach person")
             self.mimi.ttsSpeak("Approach person")
             self.clear_costmaps()
