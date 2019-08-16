@@ -35,7 +35,9 @@ class Navigation:
                               ['sofa', 1.45, 4.56, 0.696, 0.717],
                               ['chair', 2.1, 4.55,  0.696, 0.717],
                               ['shelf', 3.44, 4.52, 0.696, 0.717],
-                              ['exit', 4.04, 5.89, 0.696, 0.717]
+                              ['exit', 4.04, 5.89, 0.696, 0.717],
+                              ['living room', , , ,],
+                              ['dining room', , , ,]
                               ]
         self.location_pose_x = 0
         self.location_pose_y = 0
@@ -120,13 +122,12 @@ class Navigation:
                 self.destination = 'Null'
                 result = Bool()
                 result.data = True
-                rospy.sleep(0.3)
+                rospy.sleep(1.0)
                 self.navigation_result_pub.publish(result)
                 rospy.loginfo("Published result")
                 num = 0
-                rospy.sleep(2.0)
                 result.data = False
-                rospy.sleep(0.1)
+                rospy.sleep(5.0)
                 self.navigation_result_pub.publish(result)
                 return 0
             elif num == 4:
