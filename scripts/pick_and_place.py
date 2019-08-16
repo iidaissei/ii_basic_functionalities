@@ -140,9 +140,8 @@ class MoveObject():#---------------------------------------------------state0
                 rospy.sleep(2.0)
             rospy.sleep(2.0)
             self.mimi.ttsSpeak("Thank you")
-            #while not rospy.is_shutdown() and not self.mimi.front_laser_dist < 2.0:
-            #    self.mimi.linearControl(0.25)
-            for i in range(48):
+            rospy.sleep(0.1)
+            for i in range(15):
                 self.mimi.linearControl(0.3)#linear0.3を15回で80cm前進
                 rospy.sleep(0.2)
             rospy.sleep(0.5)
@@ -162,7 +161,7 @@ class MoveObject():#---------------------------------------------------state0
             rospy.sleep(1.0)
             self.doorOpenStart()
             rospy.sleep(0.5)
-            self.nav.movePlace('table')#objectの置き場所を送る
+            self.nav.movePlace('Table')#objectの置き場所を送る
             rospy.sleep(0.5)
             rospy.loginfo(" Finish the state0")
             return 1
@@ -196,9 +195,9 @@ class PickObject():#----------------------------------------------------state1
             for i in range(10):
                 self.mimi.angularControl(0.3)
                 if i == 10:
-                    self.mimi.ttsSpeak("I can't find object")
-                    rospy.sleep(1.0)
-                    self.mimi.ttsSpeak("Please help me")
+                    #self.mimi.ttsSpeak("I can't find object")
+                    #rospy.sleep(1.0)
+                    #self.mimi.ttsSpeak("Please help me")
                     self.mimi.angularControl(0)
                     break
         self.object_list_flg = False
@@ -272,16 +271,22 @@ class PlaceObject():#-----------------------------------------------------------
             rospy.sleep(0.1)
             self.mimi.motorControl(6, 0.3)
             rospy.sleep(1.5)
-            self.nav.movePlace('shelf')#競技開始前に場所を指定する
-            rospy.sleep(1.0)
+            while not rospy.is_shutdown():
+                if self.object_name == 'Glass Noodle' or 'Blue Noodle':
+                    self.nav.movePlace('Drawer')
+                elif self.object_name == 'Blue Stick' or 'Potato Chips':
+                    self.nav.movePlace('Cupboard')
+                elif self.object_name == 'Lemon Tea':
+                    self.nav.movePlace('Couch')
+                else:
+                    self.nav.movePlace('Cupboard')
+            rospy.sleep(1.5)
             self.statrObjectPlace()
             rospy.sleep(1.0)
             rospy.loginfo(" Finish the state2")
             rospy.loginfo(" Finished pick and place")
             self.mimi.ttsSpeak("Finished pick and place")
             rospy.sleep(2.0)
-            self.nav.movePlace('AvoidThat startposition')
-            rospy.sleep(1.0)
             data = Bool()
             data.data = True
             rospy.sleep(0.1)
@@ -295,7 +300,7 @@ class PlaceObject():#-----------------------------------------------------------
 if __name__ == '__main__':
     rospy.init_node("pick_and_place", anonymous = True)
     try:
-        state = 2
+        state = 0
         moveO = MoveObject()
         pickO = PickObject()
         placeO = PlaceObject()

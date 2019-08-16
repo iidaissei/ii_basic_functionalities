@@ -119,11 +119,11 @@ class WhatDidYouSay():
             question_number = 1
             result = Bool()
             result.data = True
-            while not rospy.is_shutdown() and not question_number == 5:
+            while not rospy.is_shutdown() and not question_number == 4:
                 rospy.sleep(1.0)
                 rospy.loginfo(" Question Number: " + str(question_number))
                 self.mimi.ttsSpeak("Please give me a question")
-                rospy.sleep(0.8)
+                rospy.sleep(1.0)
                 self.conversation_start_pub.publish(result)
                 rospy.loginfo(" Published 'conversation/start' Topic")
                 while not rospy.is_shutdown() and  self.conversation_stop_flg == True:
@@ -132,6 +132,7 @@ class WhatDidYouSay():
                 self.conversation_stop_flg = True
                 rospy.sleep(0.5)
                 rospy.loginfo(" Subscribed 'conversation/stop' Topic")
+                
                 self.mimi.ttsSpeak("I finished answering")
                 question_number += 1
             self.mimi.ttsSpeak("I answered all questions")
@@ -146,8 +147,6 @@ class WhatDidYouSay():
             rospy.loginfo(" Start the state0")
             rospy.sleep(1.0)
             self.mimi.ttsSpeak("Start What Did You Say")
-            rospy.sleep(1.0)
-            self.nav.movePlace('WhatDidYouSay startposition')#スタート地点に移動
             rospy.sleep(1.0)
             rospy.loginfo(" Finished the state0")
             return 1
@@ -193,7 +192,7 @@ class WhatDidYouSay():
             print '-' *80
             rospy.loginfo(" Start the state3")
             rospy.sleep(1.0)
-            self.nav.movePlace('entrance')#大会時変更
+            self.nav.movePlace('Exit')#大会時変更
             rospy.sleep(2.0)
             rospy.loginfo(" Finished the state3")
             rospy.loginfo(" Finished What Did You Say")
@@ -206,7 +205,7 @@ class WhatDidYouSay():
 if __name__ == '__main__':
     rospy.init_node("what_did_you_say", anonymous = True)
     try:
-        state = 2
+        state = 0
         wds = WhatDidYouSay()
         while not rospy.is_shutdown() and not state == 4:
             if state == 0:
