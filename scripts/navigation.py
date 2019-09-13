@@ -25,19 +25,19 @@ class Navigation:
         self.clear_costmaps = rospy.ServiceProxy('move_base/clear_costmaps', Empty)
 
         self.location_name = 'Null'
-        self.location_list = [['entrance', 0.117, 0.32, , ],
-                              ['operator', 2.15, 1, , ],
+        self.location_list = [['entrance', 0.117, 0.32, 0.249, 0.968],
+                              ['operator', 2.15, 1, 0.44, 0.89],
                               ['table', 2.95, 1.74, 0.696, 0.717],
-                              ['drawer', 1.81, 0.38, -0.760, 0.642],
-                              ['cupboard', 2.61, 0.08, -0.760, 0.642],
+                              ['drawer', 1.81, 0.5, -0.760, 0.642],
+                              ['cupboard', 2.61, 0.5, -0.760, 0.642],
                               ['couch', 3.34, 0.416, -0.760, 0.642],
-                              ['bin', 1.87, 4.3, -0.760, 0.642],
+                              ['bin', 4.0, 0.5, -0.760, 0.642],
                               ['sofa', 1.45, 4.56, 0.696, 0.717],
                               ['chair', 2.1, 4.55,  0.696, 0.717],
                               ['shelf', 3.44, 4.52, 0.696, 0.717],
                               ['exit', 4.04, 5.89, 0.696, 0.717],
-                              ['living room', , , ,],
-                              ['dining room', , , ,]
+                              ['living room', 0.99, 2.23, 0.255, 0.968],
+                              ['dining room', 1.33, 3.53, 0.255, 0.968]
                               ]
         self.location_pose_x = 0
         self.location_pose_y = 0
