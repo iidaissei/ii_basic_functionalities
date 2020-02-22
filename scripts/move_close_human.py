@@ -6,6 +6,7 @@ import tf
 import math
 import actionlib
 import subprocess
+import rosparam
 import time
 from math import pi
 from std_srvs.srv import Empty
@@ -67,9 +68,10 @@ class Navigation():
         self.mimi = MimiControlClass()
 
     def getTfCB(self, receive_msg):#向きのみを購読
-        self.tf_pose_w = receive_msg.pose.pose.orientation.w
-        self.tf_pose_z = receive_msg.pose.pose.orientation.z
-        self.sub_tf_flg = True
+        if receive_msg.header.frame_id == 'odom':
+            self.tf_pose_w = receive_msg.pose.pose.orientation.w
+            self.tf_pose_z = receive_msg.pose.pose.orientation.z
+            self.sub_tf_flg = True
 
     def getStatusCB(self, receive_msg):
         try:
@@ -83,6 +85,8 @@ class Navigation():
             rospy.sleep(0.1)
             self.mimi.motorControl(6, 0.3)
             rospy.sleep(2.0)
+            #rosparam.set_param('/move_base/DWAPlannerROS/xy_goal_tolerance', 0.50)
+            print 'set goal_tolerance'
             while not rospy.is_shutdown() and self.sub_tf_flg == False:
                 rospy.sleep(1.0)
             self.sub_tf_flg = False
